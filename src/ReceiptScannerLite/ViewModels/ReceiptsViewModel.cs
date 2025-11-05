@@ -11,6 +11,7 @@ public partial class ReceiptsViewModel : ObservableObject
 {
     private readonly IReceiptRepository _receiptRepository;
     private readonly INavigationService _navigationService;
+    private readonly ICategoryService _categoryService;
     private CancellationTokenSource? _searchDebounceTokenSource;
 
     [ObservableProperty]
@@ -31,26 +32,21 @@ public partial class ReceiptsViewModel : ObservableObject
     [ObservableProperty]
     private DateTime? _toDate;
 
-    public List<string> Categories { get; } = new()
-    {
-        "All",
-        "Uncategorized",
-        "Groceries",
-        "Dining",
-        "Transportation",
-        "Entertainment",
-        "Shopping",
-        "Healthcare",
-        "Utilities",
-        "Other"
-    };
+    public IReadOnlyList<string> Categories { get; }
 
     public ReceiptsViewModel(
         IReceiptRepository receiptRepository,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        ICategoryService categoryService)
     {
         _receiptRepository = receiptRepository;
         _navigationService = navigationService;
+        _categoryService = categoryService;
+
+        // Add "All" to the beginning of the category list for filtering
+        var allCategories = new List<string> { "All" };
+        allCategories.AddRange(_categoryService.GetAllCategories());
+        Categories = allCategories.AsReadOnly();
     }
 
     public async Task LoadReceiptsAsync()

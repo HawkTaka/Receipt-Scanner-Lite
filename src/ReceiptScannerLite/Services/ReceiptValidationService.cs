@@ -5,19 +5,12 @@ namespace ReceiptScannerLite.Services;
 public class ReceiptValidationService : IReceiptValidationService
 {
     private const decimal TotalTolerance = 0.02m; // 2 cent tolerance for rounding differences
+    private readonly ICategoryService _categoryService;
 
-    private static readonly HashSet<string> ValidCategories = new()
+    public ReceiptValidationService(ICategoryService categoryService)
     {
-        "Uncategorized",
-        "Groceries",
-        "Dining",
-        "Transportation",
-        "Entertainment",
-        "Shopping",
-        "Healthcare",
-        "Utilities",
-        "Other"
-    };
+        _categoryService = categoryService;
+    }
 
     public ValidationResult Validate(Receipt receipt)
     {
@@ -82,9 +75,9 @@ public class ReceiptValidationService : IReceiptValidationService
         }
 
         // Validate Category
-        if (!ValidCategories.Contains(receipt.Category))
+        if (!_categoryService.IsValidCategory(receipt.Category))
         {
-            result.AddError($"Invalid category '{receipt.Category}'. Must be one of: {string.Join(", ", ValidCategories)}");
+            result.AddError($"Invalid category '{receipt.Category}'. Must be one of: {string.Join(", ", _categoryService.GetAllCategories())}");
         }
 
         // Validate ImagePath exists if provided

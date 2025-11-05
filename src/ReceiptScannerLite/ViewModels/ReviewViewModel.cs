@@ -13,6 +13,7 @@ public partial class ReviewViewModel : ObservableObject
     private readonly ILineItemRepository _lineItemRepository;
     private readonly INavigationService _navigationService;
     private readonly IReceiptValidationService _validationService;
+    private readonly ICategoryService _categoryService;
 
     [ObservableProperty]
     private string? _storeName;
@@ -30,7 +31,7 @@ public partial class ReviewViewModel : ObservableObject
     private decimal? _total;
 
     [ObservableProperty]
-    private string _category = "Uncategorized";
+    private string _category;
 
     [ObservableProperty]
     private string? _notes;
@@ -49,29 +50,23 @@ public partial class ReviewViewModel : ObservableObject
 
     public ObservableCollection<LineItemEdit> LineItems { get; } = new();
 
-    public List<string> Categories { get; } = new()
-    {
-        "Uncategorized",
-        "Groceries",
-        "Dining",
-        "Transportation",
-        "Entertainment",
-        "Shopping",
-        "Healthcare",
-        "Utilities",
-        "Other"
-    };
+    public IReadOnlyList<string> Categories { get; }
 
     public ReviewViewModel(
         IReceiptRepository receiptRepository,
         ILineItemRepository lineItemRepository,
         INavigationService navigationService,
-        IReceiptValidationService validationService)
+        IReceiptValidationService validationService,
+        ICategoryService categoryService)
     {
         _receiptRepository = receiptRepository;
         _lineItemRepository = lineItemRepository;
         _navigationService = navigationService;
         _validationService = validationService;
+        _categoryService = categoryService;
+
+        Categories = _categoryService.GetAllCategories();
+        _category = _categoryService.GetDefaultCategory();
     }
 
     public void LoadParseResult(string imagePath, string rawText, Services.ParseResult? parseResult)

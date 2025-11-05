@@ -80,10 +80,22 @@ public class ReceiptValidationService : IReceiptValidationService
             result.AddError($"Invalid category '{receipt.Category}'. Must be one of: {string.Join(", ", _categoryService.GetAllCategories())}");
         }
 
-        // Validate ImagePath exists if provided
-        if (!string.IsNullOrWhiteSpace(receipt.ImagePath) && !File.Exists(receipt.ImagePath))
+        // Validate ImagePath exists and is within allowed directory
+        if (!string.IsNullOrWhiteSpace(receipt.ImagePath))
         {
-            result.AddError($"Image file does not exist at path: {receipt.ImagePath}");
+            // Security: Validate path is within the receipts directory (prevent path traversal)
+            var receiptsDir = Path.Combine(FileSystem.Current.AppDataDirectory, "receipts");
+            var fullImagePath = Path.GetFullPath(receipt.ImagePath);
+            var fullReceiptsDir = Path.GetFullPath(receiptsDir);
+
+            if (!fullImagePath.StartsWith(fullReceiptsDir, StringComparison.OrdinalIgnoreCase))
+            {
+                result.AddError($"Image path must be within the receipts directory. Path traversal is not allowed.");
+            }
+            else if (!File.Exists(receipt.ImagePath))
+            {
+                result.AddError($"Image file does not exist at path: {receipt.ImagePath}");
+            }
         }
 
         // Validate StoreName length if provided
@@ -96,6 +108,95 @@ public class ReceiptValidationService : IReceiptValidationService
         if (!string.IsNullOrWhiteSpace(receipt.Notes) && receipt.Notes.Length > 1000)
         {
             result.AddError("Notes are too long (maximum 1000 characters).");
+        }
+
+        return result;
+    }
+
+    public ValidationResult ValidateWithLineItems(Receipt receipt, IEnumerable<LineItem> lineItems)
+    {
+        // First validate the receipt itself
+        var result = Validate(receipt);
+
+        // Validate line items
+        var lineItemsList = lineItems.ToList();
+
+        for (int i = 0; i < lineItemsList.Count; i++)
+        {
+            var item = lineItemsList[i];
+            var itemNumber = i + 1;
+
+            // Validate Description
+            if (string.IsNullOrWhiteSpace(item.Description))
+            {
+                result.AddError($"Line item {itemNumber}: Description is required.");
+            }
+            else if (item.Description.Length > 200)
+            {
+                result.AddError($"Line item {itemNumber}: Description is too long (maximum 200 characters).");
+            }
+
+            // Validate Quantity
+            if (item.Quantity.HasValue)
+            {
+                if (item.Quantity.Value <= 0)
+                {
+                    result.AddError($"Line item {itemNumber}: Quantity must be greater than zero.");
+                }
+                if (item.Quantity.Value > 10000)
+                {
+                    result.AddError($"Line item {itemNumber}: Quantity seems unusually high.");
+                }
+            }
+
+            // Validate UnitPrice
+            if (item.UnitPrice.HasValue)
+            {
+                if (item.UnitPrice.Value < 0)
+                {
+                    result.AddError($"Line item {itemNumber}: Unit price cannot be negative.");
+                }
+                if (item.UnitPrice.Value > 1000000)
+                {
+                    result.AddError($"Line item {itemNumber}: Unit price seems unusually high.");
+                }
+            }
+
+            // Validate LineTotal
+            if (item.LineTotal.HasValue)
+            {
+                if (item.LineTotal.Value < 0)
+                {
+                    result.AddError($"Line item {itemNumber}: Line total cannot be negative.");
+                }
+                if (item.LineTotal.Value > receipt.Total)
+                {
+                    result.AddError($"Line item {itemNumber}: Line total ({item.LineTotal.Value:C}) cannot exceed receipt total ({receipt.Total:C}).");
+                }
+
+                // Validate LineTotal = Quantity * UnitPrice (if both provided)
+                if (item.Quantity.HasValue && item.UnitPrice.HasValue)
+                {
+                    var expectedTotal = item.Quantity.Value * item.UnitPrice.Value;
+                    var difference = Math.Abs(expectedTotal - item.LineTotal.Value);
+
+                    if (difference > TotalTolerance)
+                    {
+                        result.AddError($"Line item {itemNumber}: Line total ({item.LineTotal.Value:C}) does not match Quantity ({item.Quantity.Value}) × Unit Price ({item.UnitPrice.Value:C}) = {expectedTotal:C}");
+                    }
+                }
+            }
+        }
+
+        // Validate sum of line totals doesn't exceed receipt total
+        var lineItemsWithTotals = lineItemsList.Where(li => li.LineTotal.HasValue).ToList();
+        if (lineItemsWithTotals.Any())
+        {
+            var sumOfLineItems = lineItemsWithTotals.Sum(li => li.LineTotal!.Value);
+            if (sumOfLineItems > receipt.Total + TotalTolerance)
+            {
+                result.AddError($"Sum of line item totals ({sumOfLineItems:C}) exceeds receipt total ({receipt.Total:C}).");
+            }
         }
 
         return result;

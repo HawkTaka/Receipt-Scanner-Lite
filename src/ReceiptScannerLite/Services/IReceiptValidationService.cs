@@ -8,6 +8,14 @@ public interface IReceiptValidationService
     /// <param name="receipt">The receipt to validate</param>
     /// <returns>Validation result indicating if valid and any error messages</returns>
     ValidationResult Validate(Data.Models.Receipt receipt);
+
+    /// <summary>
+    /// Validates a receipt along with its line items.
+    /// </summary>
+    /// <param name="receipt">The receipt to validate</param>
+    /// <param name="lineItems">The line items to validate</param>
+    /// <returns>Validation result indicating if valid and any error messages</returns>
+    ValidationResult ValidateWithLineItems(Data.Models.Receipt receipt, IEnumerable<Data.Models.LineItem> lineItems);
 }
 
 public class ValidationResult

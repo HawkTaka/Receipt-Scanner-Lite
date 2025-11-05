@@ -151,6 +151,9 @@ public partial class EditReceiptViewModel : ObservableObject
     [RelayCommand]
     private void RemoveLineItem(LineItemEdit item)
     {
+        if (item == null)
+            return;
+
         LineItems.Remove(item);
     }
 
@@ -209,8 +212,8 @@ public partial class EditReceiptViewModel : ObservableObject
 
             StatusMessage = "Receipt saved successfully!";
 
-            // Navigate back to detail page
-            await Task.Delay(500);
+            // Navigate back to detail page immediately
+            // The successful navigation itself confirms the save succeeded
             _navigationService.NavigateToReceipt(_receiptId);
         }
         catch (Exception ex)

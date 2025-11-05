@@ -124,6 +124,9 @@ public partial class ReviewViewModel : ObservableObject
     [RelayCommand]
     private void RemoveLineItem(LineItemEdit item)
     {
+        if (item == null)
+            return;
+
         LineItems.Remove(item);
     }
 
@@ -185,8 +188,8 @@ public partial class ReviewViewModel : ObservableObject
 
             StatusMessage = "Receipt saved successfully!";
 
-            // Navigate back to receipts list
-            await Task.Delay(500);
+            // Navigate back to receipts list immediately
+            // The successful navigation itself confirms the save succeeded
             _navigationService.NavigateTo("/receipts");
         }
         catch (Exception ex)

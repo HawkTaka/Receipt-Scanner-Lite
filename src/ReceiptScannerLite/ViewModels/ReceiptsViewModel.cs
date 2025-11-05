@@ -157,6 +157,12 @@ public partial class ReceiptsViewModel : ObservableObject
     [RelayCommand]
     private async Task DeleteReceiptAsync(Receipt receipt)
     {
+        if (receipt == null)
+        {
+            _logger.LogWarning("DeleteReceiptAsync called with null receipt");
+            return;
+        }
+
         // Show confirmation dialog
         var storeName = string.IsNullOrWhiteSpace(receipt.StoreName) ? "Unknown Store" : receipt.StoreName;
         var confirmed = await _dialogService.ConfirmAsync(
@@ -186,6 +192,12 @@ public partial class ReceiptsViewModel : ObservableObject
     [RelayCommand]
     private void ViewReceipt(Receipt receipt)
     {
+        if (receipt == null)
+        {
+            _logger.LogWarning("ViewReceipt called with null receipt");
+            return;
+        }
+
         _navigationService.NavigateToReceipt(receipt.Id);
     }
 
@@ -215,21 +227,56 @@ public partial class ReceiptsViewModel : ObservableObject
             {
                 // Expected when user types again - do nothing
             }
+            catch (Exception ex)
+            {
+                // Log unexpected errors during debounced search
+                _logger.LogError(ex, "Error during debounced search");
+            }
         }, token);
     }
 
     partial void OnSelectedCategoryChanged(string? value)
     {
-        _ = RefreshCommand.ExecuteAsync(null);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await RefreshCommand.ExecuteAsync(null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refreshing receipts after category change");
+            }
+        });
     }
 
     partial void OnFromDateChanged(DateTime? value)
     {
-        _ = RefreshCommand.ExecuteAsync(null);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await RefreshCommand.ExecuteAsync(null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refreshing receipts after from date change");
+            }
+        });
     }
 
     partial void OnToDateChanged(DateTime? value)
     {
-        _ = RefreshCommand.ExecuteAsync(null);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await RefreshCommand.ExecuteAsync(null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refreshing receipts after to date change");
+            }
+        });
     }
 }

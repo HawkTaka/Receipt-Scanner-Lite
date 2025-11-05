@@ -1,4 +1,6 @@
 @page "/"
+@inject NavigationManager NavigationManager
+@inject INavigationService NavigationService
 
 <div class="home-container">
     <h1>Welcome to Receipt Scanner Lite</h1>
@@ -29,7 +31,10 @@
 @code {
     protected override void OnInitialized()
     {
-        // Navigate to capture page by default
-        // NavigationManager.NavigateTo("/capture");
+        // Initialize navigation service with NavigationManager
+        if (NavigationService is NavigationService navService)
+        {
+            navService.Initialize(NavigationManager);
+        }
     }
 }

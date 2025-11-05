@@ -1,5 +1,7 @@
 @page "/review"
 @inject ReviewViewModel ViewModel
+@inject NavigationManager NavigationManager
+@inject INavigationService NavigationService
 
 <div class="page-container">
     <h2>Review Receipt</h2>
@@ -89,6 +91,24 @@
 </div>
 
 @code {
+    protected override void OnInitialized()
+    {
+        // Initialize navigation service
+        if (NavigationService is NavigationService navService)
+        {
+            navService.Initialize(NavigationManager);
+        }
+
+        // Load data from ReviewStateHolder
+        var state = ReviewStateHolder.Current;
+        if (state != null)
+        {
+            ViewModel.LoadParseResult(state.ImagePath, state.RawText, state.ParseResult);
+            // Clear the state after loading
+            ReviewStateHolder.Current = null;
+        }
+    }
+
     private async Task Save()
     {
         await ViewModel.SaveCommand.ExecuteAsync(null);

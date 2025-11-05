@@ -36,6 +36,7 @@ public static class MauiProgram
         // Services
         builder.Services.AddSingleton<IBootstrapService, BootstrapService>();
         builder.Services.AddSingleton<IFileService, FileService>();
+        builder.Services.AddSingleton<IImageService, ImageService>();
         builder.Services.AddSingleton<IImagePreprocessService, ImagePreprocessService>();
         builder.Services.AddSingleton<IParseService, ParseService>();
         builder.Services.AddSingleton<ICsvExportService, CsvExportService>();

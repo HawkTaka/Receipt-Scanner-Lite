@@ -1,5 +1,8 @@
 @page "/capture"
 @inject CaptureViewModel ViewModel
+@inject NavigationManager NavigationManager
+@inject INavigationService NavigationService
+@inject IImageService ImageService
 
 <div class="page-container">
     <h2>Capture Receipt</h2>
@@ -17,7 +20,19 @@
     {
         <div class="image-preview">
             <h3>Preview</h3>
-            <img src="@GetImageDataUrl()" alt="Receipt" class="preview-image" />
+            @if (!string.IsNullOrEmpty(_imageDataUrl))
+            {
+                <img src="@_imageDataUrl" alt="Receipt" class="preview-image" />
+            }
+            else if (_isLoadingImage)
+            {
+                <div class="spinner"></div>
+                <p>Loading image...</p>
+            }
+            else
+            {
+                <p>Unable to load image preview</p>
+            }
 
             <div class="preview-actions">
                 <button class="btn btn-primary" @onclick="ProcessImage" disabled="@ViewModel.IsProcessing">
@@ -47,9 +62,55 @@
 </div>
 
 @code {
+    private string? _imageDataUrl;
+    private bool _isLoadingImage;
+
     protected override void OnInitialized()
     {
-        // Subscribe to property changes if needed
+        // Initialize navigation service
+        if (NavigationService is NavigationService navService)
+        {
+            navService.Initialize(NavigationManager);
+        }
+
+        // Subscribe to ViewModel property changes
+        ViewModel.PropertyChanged += async (s, e) =>
+        {
+            if (e.PropertyName == nameof(ViewModel.CapturedImagePath))
+            {
+                await LoadImageAsync();
+            }
+        };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !string.IsNullOrEmpty(ViewModel.CapturedImagePath))
+        {
+            await LoadImageAsync();
+        }
+    }
+
+    private async Task LoadImageAsync()
+    {
+        if (string.IsNullOrEmpty(ViewModel.CapturedImagePath))
+        {
+            _imageDataUrl = null;
+            return;
+        }
+
+        _isLoadingImage = true;
+        StateHasChanged();
+
+        try
+        {
+            _imageDataUrl = await ImageService.GetImageDataUrlAsync(ViewModel.CapturedImagePath);
+        }
+        finally
+        {
+            _isLoadingImage = false;
+            StateHasChanged();
+        }
     }
 
     private async Task CapturePhoto()
@@ -70,12 +131,7 @@
     private void ClearImage()
     {
         ViewModel.ClearImageCommand.Execute(null);
-    }
-
-    private string GetImageDataUrl()
-    {
-        // In a real app, we'd convert the image to a data URL or use a proper image component
-        // For now, just return the file path (won't work in Blazor but shows the intent)
-        return ViewModel.CapturedImagePath ?? "";
+        _imageDataUrl = null;
     }
 }
+

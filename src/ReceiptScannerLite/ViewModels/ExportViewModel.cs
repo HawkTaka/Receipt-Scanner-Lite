@@ -88,13 +88,37 @@ public partial class ExportViewModel : ObservableObject
                 return;
             }
 
-            var outputPath = Path.Combine(
-                FileSystem.Current.AppDataDirectory,
-                $"receipts_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+            // Generate filename with timestamp
+            var fileName = $"receipts_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
 
-            await _csvExportService.ExportReceiptsAsync(receipts, outputPath);
+            // First export to a temp file
+            var tempPath = Path.Combine(FileSystem.Current.CacheDirectory, fileName);
+            await _csvExportService.ExportReceiptsAsync(receipts, tempPath);
 
-            StatusMessage = $"Exported {receipts.Count} receipts to:\n{outputPath}";
+            // Let user choose save location
+            var result = await FileSaver.Default.SaveAsync(fileName, tempPath);
+
+            if (result.IsSuccessful)
+            {
+                StatusMessage = $"Exported {receipts.Count} receipts to:\n{result.FilePath}";
+            }
+            else
+            {
+                StatusMessage = result.Exception?.Message ?? "Export cancelled by user.";
+            }
+
+            // Clean up temp file
+            try
+            {
+                if (File.Exists(tempPath))
+                {
+                    File.Delete(tempPath);
+                }
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
         }
         catch (Exception ex)
         {
@@ -141,13 +165,37 @@ public partial class ExportViewModel : ObservableObject
                 return;
             }
 
-            var outputPath = Path.Combine(
-                FileSystem.Current.AppDataDirectory,
-                $"lineitems_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+            // Generate filename with timestamp
+            var fileName = $"lineitems_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
 
-            await _csvExportService.ExportLineItemsAsync(allItems, outputPath);
+            // First export to a temp file
+            var tempPath = Path.Combine(FileSystem.Current.CacheDirectory, fileName);
+            await _csvExportService.ExportLineItemsAsync(allItems, tempPath);
 
-            StatusMessage = $"Exported {allItems.Count} line items to:\n{outputPath}";
+            // Let user choose save location
+            var result = await FileSaver.Default.SaveAsync(fileName, tempPath);
+
+            if (result.IsSuccessful)
+            {
+                StatusMessage = $"Exported {allItems.Count} line items to:\n{result.FilePath}";
+            }
+            else
+            {
+                StatusMessage = result.Exception?.Message ?? "Export cancelled by user.";
+            }
+
+            // Clean up temp file
+            try
+            {
+                if (File.Exists(tempPath))
+                {
+                    File.Delete(tempPath);
+                }
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
         }
         catch (Exception ex)
         {

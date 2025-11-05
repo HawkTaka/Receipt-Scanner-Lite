@@ -1,25 +1,34 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 
 namespace ReceiptScannerLite.Services;
 
 public class NavigationService : INavigationService
 {
     private NavigationManager? _navigationManager;
+    private readonly ILogger<NavigationService> _logger;
+
+    public NavigationService(ILogger<NavigationService> logger)
+    {
+        _logger = logger;
+    }
 
     public void Initialize(NavigationManager navigationManager)
     {
         _navigationManager = navigationManager;
+        _logger.LogDebug("NavigationManager initialized");
     }
 
     public void NavigateTo(string uri)
     {
         if (_navigationManager == null)
         {
-            Console.WriteLine($"Warning: NavigationManager not initialized. Cannot navigate to {uri}");
+            _logger.LogWarning("NavigationManager not initialized. Cannot navigate to {Uri}", uri);
             return;
         }
 
         _navigationManager.NavigateTo(uri);
+        _logger.LogDebug("Navigated to {Uri}", uri);
     }
 
     public void NavigateToReview(string imagePath, string rawText, ParseResult? parseResult)
@@ -48,7 +57,7 @@ public class NavigationService : INavigationService
     {
         if (_navigationManager == null)
         {
-            Console.WriteLine("Warning: NavigationManager not initialized. Cannot navigate back");
+            _logger.LogWarning("NavigationManager not initialized. Cannot navigate back");
             return;
         }
 

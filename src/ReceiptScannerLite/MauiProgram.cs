@@ -48,7 +48,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IOcrService>(sp =>
         {
             var tessdataPath = Path.Combine(FileSystem.AppDataDirectory, "tessdata");
-            return new OcrService(tessdataPath);
+            var logger = sp.GetRequiredService<ILogger<OcrService>>();
+            return new OcrService(tessdataPath, logger);
         });
 
         // ViewModels

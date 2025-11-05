@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Tesseract;
 
 namespace ReceiptScannerLite.Services;
@@ -6,19 +7,23 @@ public class OcrService : IOcrService, IDisposable
 {
     private readonly TesseractEngine? _engine;
     private readonly SemaphoreSlim _engineLock = new SemaphoreSlim(1, 1);
+    private readonly ILogger<OcrService> _logger;
     private bool _disposed;
 
-    public OcrService(string tessdataPath)
+    public OcrService(string tessdataPath, ILogger<OcrService> logger)
     {
+        _logger = logger;
+
         try
         {
             _engine = new TesseractEngine(tessdataPath, "eng", EngineMode.Default);
+            _logger.LogInformation("Tesseract engine initialized successfully with tessdata path: {TessdataPath}", tessdataPath);
         }
         catch (Exception ex)
         {
             // If Tesseract initialization fails, log but don't crash
             // This allows the app to function with manual entry
-            Console.WriteLine($"Warning: Tesseract initialization failed: {ex.Message}");
+            _logger.LogWarning(ex, "Tesseract initialization failed. App will function with manual entry only.");
             _engine = null;
         }
     }

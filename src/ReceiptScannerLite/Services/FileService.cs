@@ -1,13 +1,18 @@
+using Microsoft.Extensions.Logging;
+
 namespace ReceiptScannerLite.Services;
 
 public class FileService : IFileService
 {
     private readonly string _receiptsDirectory;
+    private readonly ILogger<FileService> _logger;
 
-    public FileService()
+    public FileService(ILogger<FileService> logger)
     {
+        _logger = logger;
         _receiptsDirectory = Path.Combine(FileSystem.Current.AppDataDirectory, "receipts");
         Directory.CreateDirectory(_receiptsDirectory);
+        _logger.LogDebug("FileService initialized with receipts directory: {Directory}", _receiptsDirectory);
     }
 
     public async Task<string?> CapturePhotoAsync()
@@ -34,7 +39,7 @@ public class FileService : IFileService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error capturing photo: {ex.Message}");
+            _logger.LogError(ex, "Error capturing photo");
             throw; // Re-throw to let caller handle permission denials
         }
     }
@@ -63,7 +68,7 @@ public class FileService : IFileService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error picking photo: {ex.Message}");
+            _logger.LogError(ex, "Error picking photo");
             throw; // Re-throw to let caller handle permission denials
         }
     }
@@ -91,7 +96,7 @@ public class FileService : IFileService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error deleting file: {ex.Message}");
+            _logger.LogWarning(ex, "Error deleting file: {FilePath}", filePath);
         }
 
         return Task.CompletedTask;

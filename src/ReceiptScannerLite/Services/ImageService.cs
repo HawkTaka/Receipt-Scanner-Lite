@@ -1,7 +1,16 @@
+using Microsoft.Extensions.Logging;
+
 namespace ReceiptScannerLite.Services;
 
 public class ImageService : IImageService
 {
+    private readonly ILogger<ImageService> _logger;
+
+    public ImageService(ILogger<ImageService> logger)
+    {
+        _logger = logger;
+    }
+
     public async Task<string?> GetImageDataUrlAsync(string? filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
@@ -21,7 +30,7 @@ public class ImageService : IImageService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error converting image to data URL: {ex.Message}");
+            _logger.LogError(ex, "Error converting image to data URL: {FilePath}", filePath);
             return null;
         }
     }
@@ -39,7 +48,7 @@ public class ImageService : IImageService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error reading image bytes: {ex.Message}");
+            _logger.LogError(ex, "Error reading image bytes: {FilePath}", filePath);
             return null;
         }
     }

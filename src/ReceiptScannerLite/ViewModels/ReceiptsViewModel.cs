@@ -100,6 +100,54 @@ public partial class ReceiptsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void SetDateRangeToday()
+    {
+        var today = DateTime.Today;
+        FromDate = today;
+        ToDate = today;
+    }
+
+    [RelayCommand]
+    private void SetDateRangeThisWeek()
+    {
+        var today = DateTime.Today;
+        var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+        FromDate = startOfWeek;
+        ToDate = today;
+    }
+
+    [RelayCommand]
+    private void SetDateRangeThisMonth()
+    {
+        var today = DateTime.Today;
+        FromDate = new DateTime(today.Year, today.Month, 1);
+        ToDate = today;
+    }
+
+    [RelayCommand]
+    private void SetDateRangeLast30Days()
+    {
+        var today = DateTime.Today;
+        FromDate = today.AddDays(-30);
+        ToDate = today;
+    }
+
+    [RelayCommand]
+    private void SetDateRangeThisYear()
+    {
+        var today = DateTime.Today;
+        FromDate = new DateTime(today.Year, 1, 1);
+        ToDate = today;
+    }
+
+    [RelayCommand]
+    private void SetDateRangeAllTime()
+    {
+        FromDate = null;
+        ToDate = null;
+    }
+
+    [RelayCommand]
     private async Task DeleteReceiptAsync(Receipt receipt)
     {
         // Show confirmation dialog

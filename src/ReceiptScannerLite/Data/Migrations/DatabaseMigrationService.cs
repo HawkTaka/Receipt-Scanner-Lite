@@ -30,9 +30,11 @@ public class DatabaseMigrationService
         // Version 1: Initial schema (tables already created by legacy InitializeAsync)
         _migrations.Add(new Migration_001_InitialSchema());
 
+        // Version 2: Add foreign key constraint with CASCADE DELETE
+        _migrations.Add(new Migration_002_AddForeignKeyConstraint());
+
         // Future migrations will be added here in order
-        // _migrations.Add(new Migration_002_AddSomeField());
-        // _migrations.Add(new Migration_003_AddAnotherTable());
+        // _migrations.Add(new Migration_003_AddSomeField());
     }
 
     /// <summary>

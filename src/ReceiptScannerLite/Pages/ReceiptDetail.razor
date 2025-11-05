@@ -23,6 +23,30 @@
             <button class="btn btn-secondary" @onclick="GoBack">← Back</button>
         </div>
 
+        @if (ViewModel.HasImage || ViewModel.IsLoadingImage)
+        {
+            <div class="detail-section">
+                <h3>Receipt Image</h3>
+                @if (ViewModel.IsLoadingImage)
+                {
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p>Loading image...</p>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(ViewModel.ImageDataUrl))
+                {
+                    <div class="receipt-image-container">
+                        <img src="@ViewModel.ImageDataUrl" alt="Receipt" class="receipt-image" />
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Unable to load image</p>
+                }
+            </div>
+        }
+
         <div class="detail-section">
             <h3>Details</h3>
             <div class="detail-grid">
@@ -110,6 +134,7 @@
         }
 
         <div class="detail-actions">
+            <button class="btn btn-primary" @onclick="Edit">✏️ Edit Receipt</button>
             <button class="btn btn-danger" @onclick="Delete">🗑️ Delete Receipt</button>
         </div>
     }
@@ -134,9 +159,13 @@
         ViewModel.ToggleRawTextCommand.Execute(null);
     }
 
+    private void Edit()
+    {
+        ViewModel.EditReceiptCommand.Execute(null);
+    }
+
     private async Task Delete()
     {
-        // In a real app, show confirmation dialog
         await ViewModel.DeleteCommand.ExecuteAsync(null);
     }
 }

@@ -51,6 +51,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<IDialogService, DialogService>();
         builder.Services.AddSingleton<IErrorMessageService, ErrorMessageService>();
 
+        // Scoped services (per page/request lifecycle)
+        builder.Services.AddScoped<IReviewStateService, ReviewStateService>();
+
         // OCR Service - requires tessdata path
         builder.Services.AddSingleton<IOcrService>(sp =>
         {
@@ -70,18 +73,29 @@ public static class MauiProgram
 
         var app = builder.Build();
 
-        // Initialize app on startup - use blocking wait to ensure initialization completes
-        // before app becomes fully available
+        // Initialize app on startup - synchronously initialize critical components
+        // This runs before UI is shown, so blocking is acceptable for essential setup
         try
         {
             var bootstrap = app.Services.GetRequiredService<IBootstrapService>();
-            // Use Wait() with timeout to block startup until initialization completes
-            var initTask = bootstrap.InitializeAsync();
-            if (!initTask.Wait(TimeSpan.FromSeconds(30)))
+
+            // Use GetAwaiter().GetResult() instead of Wait() for better async handling
+            // Timeout after 10 seconds (reduced from 30s)
+            var initTask = Task.Run(async () =>
             {
-                var logger = app.Services.GetRequiredService<ILogger<MauiApp>>();
-                logger.LogWarning("Bootstrap initialization timed out after 30 seconds");
-            }
+                var timeout = Task.Delay(TimeSpan.FromSeconds(10));
+                var completed = await Task.WhenAny(bootstrap.InitializeAsync(), timeout);
+
+                if (completed == timeout)
+                {
+                    var logger = app.Services.GetRequiredService<ILogger<MauiApp>>();
+                    logger.LogWarning("Bootstrap initialization timed out after 10 seconds");
+                    return false;
+                }
+                return true;
+            });
+
+            initTask.GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {

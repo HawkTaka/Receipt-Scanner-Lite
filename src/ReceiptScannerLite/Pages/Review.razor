@@ -2,6 +2,7 @@
 @inject ReviewViewModel ViewModel
 @inject NavigationManager NavigationManager
 @inject INavigationService NavigationService
+@inject IReviewStateService ReviewStateService
 
 <div class="page-container">
     <h2>Review Receipt</h2>
@@ -99,13 +100,11 @@
             navService.Initialize(NavigationManager);
         }
 
-        // Load data from ReviewStateHolder
-        var state = ReviewStateHolder.Current;
+        // Load data from ReviewStateService (scoped, thread-safe)
+        var state = ReviewStateService.GetAndClearReviewState();
         if (state != null)
         {
             ViewModel.LoadParseResult(state.ImagePath, state.RawText, state.ParseResult);
-            // Clear the state after loading
-            ReviewStateHolder.Current = null;
         }
     }
 

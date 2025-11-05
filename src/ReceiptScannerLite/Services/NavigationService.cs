@@ -7,10 +7,12 @@ public class NavigationService : INavigationService
 {
     private NavigationManager? _navigationManager;
     private readonly ILogger<NavigationService> _logger;
+    private readonly IReviewStateService _reviewStateService;
 
-    public NavigationService(ILogger<NavigationService> logger)
+    public NavigationService(ILogger<NavigationService> logger, IReviewStateService reviewStateService)
     {
         _logger = logger;
+        _reviewStateService = reviewStateService;
     }
 
     public void Initialize(NavigationManager navigationManager)
@@ -33,18 +35,8 @@ public class NavigationService : INavigationService
 
     public void NavigateToReview(string imagePath, string rawText, ParseResult? parseResult)
     {
-        // Store the data in a shared state service for the review page to pick up
-        var reviewState = new ReviewState
-        {
-            ImagePath = imagePath,
-            RawText = rawText,
-            ParseResult = parseResult
-        };
-
-        // In a real app, you'd store this in a state service
-        // For now, we'll use a simple static holder (not ideal but functional)
-        ReviewStateHolder.Current = reviewState;
-
+        // Store the data in the scoped state service for the review page to pick up
+        _reviewStateService.SetReviewState(imagePath, rawText, parseResult);
         NavigateTo("/review");
     }
 
@@ -70,20 +62,4 @@ public class NavigationService : INavigationService
         // Navigate to receipts as default fallback
         NavigateTo("/receipts");
     }
-}
-
-/// <summary>
-/// Temporary state holder for review page data.
-/// In production, use a proper state management solution.
-/// </summary>
-public static class ReviewStateHolder
-{
-    public static ReviewState? Current { get; set; }
-}
-
-public class ReviewState
-{
-    public string ImagePath { get; set; } = "";
-    public string RawText { get; set; } = "";
-    public ParseResult? ParseResult { get; set; }
 }

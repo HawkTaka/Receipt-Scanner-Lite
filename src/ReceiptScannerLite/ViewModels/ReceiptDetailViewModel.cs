@@ -12,6 +12,8 @@ public partial class ReceiptDetailViewModel : ObservableObject
     private readonly IReceiptRepository _receiptRepository;
     private readonly ILineItemRepository _lineItemRepository;
     private readonly INavigationService _navigationService;
+    private readonly IImageService _imageService;
+    private readonly IDialogService _dialogService;
 
     [ObservableProperty]
     private Receipt? _receipt;
@@ -25,14 +27,27 @@ public partial class ReceiptDetailViewModel : ObservableObject
     [ObservableProperty]
     private bool _showRawText;
 
+    [ObservableProperty]
+    private string? _imageDataUrl;
+
+    [ObservableProperty]
+    private bool _isLoadingImage;
+
+    [ObservableProperty]
+    private bool _hasImage;
+
     public ReceiptDetailViewModel(
         IReceiptRepository receiptRepository,
         ILineItemRepository lineItemRepository,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IImageService imageService,
+        IDialogService dialogService)
     {
         _receiptRepository = receiptRepository;
         _lineItemRepository = lineItemRepository;
         _navigationService = navigationService;
+        _imageService = imageService;
+        _dialogService = dialogService;
     }
 
     public async Task LoadReceiptAsync(int receiptId)
@@ -45,12 +60,16 @@ public partial class ReceiptDetailViewModel : ObservableObject
 
             if (Receipt != null)
             {
+                // Load line items
                 var items = await _lineItemRepository.GetByReceiptAsync(receiptId);
                 LineItems.Clear();
                 foreach (var item in items)
                 {
                     LineItems.Add(item);
                 }
+
+                // Load receipt image
+                await LoadImageAsync();
             }
         }
         catch (Exception ex)
@@ -60,6 +79,33 @@ public partial class ReceiptDetailViewModel : ObservableObject
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    private async Task LoadImageAsync()
+    {
+        if (Receipt == null || string.IsNullOrWhiteSpace(Receipt.ImagePath))
+        {
+            HasImage = false;
+            ImageDataUrl = null;
+            return;
+        }
+
+        IsLoadingImage = true;
+        try
+        {
+            ImageDataUrl = await _imageService.GetImageDataUrlAsync(Receipt.ImagePath);
+            HasImage = !string.IsNullOrEmpty(ImageDataUrl);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading receipt image: {ex.Message}");
+            HasImage = false;
+            ImageDataUrl = null;
+        }
+        finally
+        {
+            IsLoadingImage = false;
         }
     }
 
@@ -75,6 +121,19 @@ public partial class ReceiptDetailViewModel : ObservableObject
         if (Receipt == null)
             return;
 
+        // Show confirmation dialog
+        var storeName = string.IsNullOrWhiteSpace(Receipt.StoreName) ? "Unknown Store" : Receipt.StoreName;
+        var confirmed = await _dialogService.ConfirmAsync(
+            "Delete Receipt",
+            $"Are you sure you want to delete the receipt from {storeName} on {Receipt.Date:d}? This action cannot be undone.",
+            "Delete",
+            "Cancel");
+
+        if (!confirmed)
+        {
+            return; // User cancelled
+        }
+
         try
         {
             await _receiptRepository.DeleteAsync(Receipt.Id);
@@ -83,6 +142,7 @@ public partial class ReceiptDetailViewModel : ObservableObject
         catch (Exception ex)
         {
             Console.WriteLine($"Error deleting receipt: {ex.Message}");
+            await _dialogService.AlertAsync("Delete Failed", $"Failed to delete receipt: {ex.Message}");
         }
     }
 

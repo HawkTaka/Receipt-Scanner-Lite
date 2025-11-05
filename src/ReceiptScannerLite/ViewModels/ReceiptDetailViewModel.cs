@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ReceiptScannerLite.Data.Models;
 using ReceiptScannerLite.Data.Repositories;
+using ReceiptScannerLite.Services;
 using System.Collections.ObjectModel;
 
 namespace ReceiptScannerLite.ViewModels;
@@ -10,6 +11,7 @@ public partial class ReceiptDetailViewModel : ObservableObject
 {
     private readonly IReceiptRepository _receiptRepository;
     private readonly ILineItemRepository _lineItemRepository;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     private Receipt? _receipt;
@@ -25,10 +27,12 @@ public partial class ReceiptDetailViewModel : ObservableObject
 
     public ReceiptDetailViewModel(
         IReceiptRepository receiptRepository,
-        ILineItemRepository lineItemRepository)
+        ILineItemRepository lineItemRepository,
+        INavigationService navigationService)
     {
         _receiptRepository = receiptRepository;
         _lineItemRepository = lineItemRepository;
+        _navigationService = navigationService;
     }
 
     public async Task LoadReceiptAsync(int receiptId)
@@ -74,8 +78,7 @@ public partial class ReceiptDetailViewModel : ObservableObject
         try
         {
             await _receiptRepository.DeleteAsync(Receipt.Id);
-            // Navigate back
-            // Shell.Current.GoToAsync("..");
+            _navigationService.NavigateBack();
         }
         catch (Exception ex)
         {
@@ -86,7 +89,6 @@ public partial class ReceiptDetailViewModel : ObservableObject
     [RelayCommand]
     private void GoBack()
     {
-        // Navigate back
-        // Shell.Current.GoToAsync("..");
+        _navigationService.NavigateBack();
     }
 }

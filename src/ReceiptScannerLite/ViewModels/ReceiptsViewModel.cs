@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ReceiptScannerLite.Data.Models;
 using ReceiptScannerLite.Data.Repositories;
+using ReceiptScannerLite.Services;
 using System.Collections.ObjectModel;
 
 namespace ReceiptScannerLite.ViewModels;
@@ -9,6 +10,7 @@ namespace ReceiptScannerLite.ViewModels;
 public partial class ReceiptsViewModel : ObservableObject
 {
     private readonly IReceiptRepository _receiptRepository;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     private ObservableCollection<Receipt> _receipts = new();
@@ -42,9 +44,12 @@ public partial class ReceiptsViewModel : ObservableObject
         "Other"
     };
 
-    public ReceiptsViewModel(IReceiptRepository receiptRepository)
+    public ReceiptsViewModel(
+        IReceiptRepository receiptRepository,
+        INavigationService navigationService)
     {
         _receiptRepository = receiptRepository;
+        _navigationService = navigationService;
     }
 
     public async Task LoadReceiptsAsync()
@@ -111,8 +116,7 @@ public partial class ReceiptsViewModel : ObservableObject
     [RelayCommand]
     private void ViewReceipt(Receipt receipt)
     {
-        // Navigate to detail page
-        // Shell.Current.GoToAsync($"receipt-detail?id={receipt.Id}");
+        _navigationService.NavigateToReceipt(receipt.Id);
     }
 
     partial void OnSearchTextChanged(string? value)

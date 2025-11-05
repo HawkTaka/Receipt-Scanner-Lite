@@ -23,7 +23,7 @@ public class OcrService : IOcrService, IDisposable
         }
     }
 
-    public async Task<string> RecognizeAsync(string imagePathPng)
+    public async Task<string> RecognizeAsync(string imagePathPng, CancellationToken cancellationToken = default)
     {
         if (_engine == null)
         {
@@ -32,23 +32,31 @@ public class OcrService : IOcrService, IDisposable
 
         // Use semaphore to ensure only one thread accesses the engine at a time
         // TesseractEngine is not thread-safe
-        await _engineLock.WaitAsync();
+        // Pass cancellation token to WaitAsync so we can cancel while waiting for lock
+        await _engineLock.WaitAsync(cancellationToken);
         try
         {
             return await Task.Run(() =>
             {
                 try
                 {
+                    // Check for cancellation before starting OCR
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     using var img = Pix.LoadFromFile(imagePathPng);
                     using var page = _engine.Process(img, PageSegMode.Auto);
+
+                    // Check for cancellation before getting text (OCR already complete at this point)
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     var text = page.GetText();
                     return text ?? string.Empty;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     throw new InvalidOperationException($"OCR recognition failed: {ex.Message}", ex);
                 }
-            });
+            }, cancellationToken);
         }
         finally
         {

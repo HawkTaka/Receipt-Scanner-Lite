@@ -7,7 +7,7 @@ public class ImagePreprocessService : IImagePreprocessService
     private const int MaxLongEdge = 2000;
     private const float ContrastMultiplier = 1.2f;
 
-    public async Task<string> PrepareForOcrAsync(string inputImagePath)
+    public async Task<string> PrepareForOcrAsync(string inputImagePath, CancellationToken cancellationToken = default)
     {
         return await Task.Run(() =>
         {
@@ -19,6 +19,9 @@ public class ImagePreprocessService : IImagePreprocessService
 
             try
             {
+                // Check for cancellation before starting
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Load the image
                 using var inputStream = File.OpenRead(inputImagePath);
                 using var original = SKBitmap.Decode(inputStream);
@@ -29,18 +32,23 @@ public class ImagePreprocessService : IImagePreprocessService
                 }
 
                 // Step 1: Scale down to max long edge
+                cancellationToken.ThrowIfCancellationRequested();
                 scaled = ScaleImage(original, MaxLongEdge);
 
                 // Step 2: Convert to grayscale
+                cancellationToken.ThrowIfCancellationRequested();
                 grayscale = ConvertToGrayscale(scaled);
 
                 // Step 3: Apply contrast boost
+                cancellationToken.ThrowIfCancellationRequested();
                 contrasted = ApplyContrast(grayscale, ContrastMultiplier);
 
                 // Step 4: Apply adaptive threshold (binarize)
+                cancellationToken.ThrowIfCancellationRequested();
                 binarized = ApplyAdaptiveThreshold(contrasted);
 
                 // Step 5: Save to temp PNG
+                cancellationToken.ThrowIfCancellationRequested();
                 tempPath = Path.Combine(
                     FileSystem.Current.CacheDirectory,
                     $"ocr_temp_{Guid.NewGuid()}.png");
@@ -50,7 +58,7 @@ public class ImagePreprocessService : IImagePreprocessService
 
                 return tempPath;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // Clean up temp file if created
                 if (tempPath != null && File.Exists(tempPath))

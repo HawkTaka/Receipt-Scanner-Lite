@@ -54,6 +54,18 @@ public partial class EditReceiptViewModel : ObservableObject
     [ObservableProperty]
     private string? _statusMessage;
 
+    [ObservableProperty]
+    private string? _totalError;
+
+    [ObservableProperty]
+    private string? _dateError;
+
+    [ObservableProperty]
+    private string? _categoryError;
+
+    [ObservableProperty]
+    private bool _hasValidationErrors;
+
     public ObservableCollection<LineItemEdit> LineItems { get; } = new();
 
     public IReadOnlyList<string> Categories { get; }
@@ -215,6 +227,111 @@ public partial class EditReceiptViewModel : ObservableObject
     private void Cancel()
     {
         _navigationService.NavigateBack();
+    }
+
+    partial void OnTotalChanged(decimal? value)
+    {
+        ValidateTotal();
+        UpdateValidationState();
+    }
+
+    partial void OnDateChanged(DateTime value)
+    {
+        ValidateDate();
+        UpdateValidationState();
+    }
+
+    partial void OnCategoryChanged(string value)
+    {
+        ValidateCategory();
+        UpdateValidationState();
+    }
+
+    partial void OnSubtotalChanged(decimal? value)
+    {
+        ValidateTotalCalculation();
+        UpdateValidationState();
+    }
+
+    partial void OnTaxChanged(decimal? value)
+    {
+        ValidateTotalCalculation();
+        UpdateValidationState();
+    }
+
+    private void ValidateTotal()
+    {
+        if (!Total.HasValue || Total.Value <= 0)
+        {
+            TotalError = "Total must be greater than zero";
+        }
+        else if (Total.Value > 1000000)
+        {
+            TotalError = "Total seems unusually high. Please verify.";
+        }
+        else
+        {
+            TotalError = null;
+        }
+    }
+
+    private void ValidateDate()
+    {
+        if (Date > DateTime.Today)
+        {
+            DateError = "Receipt date cannot be in the future";
+        }
+        else if (Date < DateTime.Today.AddYears(-10))
+        {
+            DateError = "Receipt date is more than 10 years old";
+        }
+        else
+        {
+            DateError = null;
+        }
+    }
+
+    private void ValidateCategory()
+    {
+        if (string.IsNullOrWhiteSpace(Category))
+        {
+            CategoryError = "Please select a category";
+        }
+        else if (!_categoryService.IsValidCategory(Category))
+        {
+            CategoryError = $"Invalid category. Please select from the list.";
+        }
+        else
+        {
+            CategoryError = null;
+        }
+    }
+
+    private void ValidateTotalCalculation()
+    {
+        if (Subtotal.HasValue && Tax.HasValue && Total.HasValue)
+        {
+            var expectedTotal = Subtotal.Value + Tax.Value;
+            var difference = Math.Abs(expectedTotal - Total.Value);
+            const decimal tolerance = 0.02m;
+
+            if (difference > tolerance)
+            {
+                TotalError = $"Total ({Total.Value:C}) doesn't match Subtotal + Tax ({expectedTotal:C})";
+            }
+            else if (!string.IsNullOrEmpty(TotalError) && TotalError.Contains("doesn't match"))
+            {
+                // Clear this specific error if it was set
+                TotalError = null;
+            }
+        }
+    }
+
+    private void UpdateValidationState()
+    {
+        HasValidationErrors = !string.IsNullOrEmpty(TotalError) ||
+                               !string.IsNullOrEmpty(DateError) ||
+                               !string.IsNullOrEmpty(CategoryError);
     }
 }
 

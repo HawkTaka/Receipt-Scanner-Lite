@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ReceiptScannerLite.Data.Models;
 using ReceiptScannerLite.Data.Repositories;
+using ReceiptScannerLite.Services;
 using System.Collections.ObjectModel;
 
 namespace ReceiptScannerLite.ViewModels;
@@ -11,6 +12,7 @@ public partial class ReviewViewModel : ObservableObject
     private readonly IReceiptRepository _receiptRepository;
     private readonly ILineItemRepository _lineItemRepository;
     private readonly INavigationService _navigationService;
+    private readonly IReceiptValidationService _validationService;
 
     [ObservableProperty]
     private string? _storeName;
@@ -63,11 +65,13 @@ public partial class ReviewViewModel : ObservableObject
     public ReviewViewModel(
         IReceiptRepository receiptRepository,
         ILineItemRepository lineItemRepository,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IReceiptValidationService validationService)
     {
         _receiptRepository = receiptRepository;
         _lineItemRepository = lineItemRepository;
         _navigationService = navigationService;
+        _validationService = validationService;
     }
 
     public void LoadParseResult(string imagePath, string rawText, Services.ParseResult? parseResult)
@@ -123,7 +127,7 @@ public partial class ReviewViewModel : ObservableObject
         }
 
         IsSaving = true;
-        StatusMessage = "Saving receipt...";
+        StatusMessage = "Validating receipt...";
 
         try
         {
@@ -141,6 +145,15 @@ public partial class ReviewViewModel : ObservableObject
                 RawText = RawText
             };
 
+            // Validate receipt before saving
+            var validationResult = _validationService.Validate(receipt);
+            if (!validationResult.IsValid)
+            {
+                StatusMessage = $"Validation failed:\n{string.Join("\n", validationResult.Errors)}";
+                return;
+            }
+
+            StatusMessage = "Saving receipt...";
             var receiptId = await _receiptRepository.InsertAsync(receipt);
             receipt.Id = receiptId;
 

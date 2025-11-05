@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using ReceiptScannerLite.Data.Repositories;
 using System.Collections.ObjectModel;
 
@@ -8,6 +9,7 @@ namespace ReceiptScannerLite.ViewModels;
 public partial class InsightsViewModel : ObservableObject
 {
     private readonly IReceiptRepository _receiptRepository;
+    private readonly ILogger<InsightsViewModel> _logger;
 
     [ObservableProperty]
     private ObservableCollection<MonthlyTotal> _monthlyTotals = new();
@@ -24,9 +26,10 @@ public partial class InsightsViewModel : ObservableObject
     [ObservableProperty]
     private int _receiptCount;
 
-    public InsightsViewModel(IReceiptRepository receiptRepository)
+    public InsightsViewModel(IReceiptRepository receiptRepository, ILogger<InsightsViewModel> logger)
     {
         _receiptRepository = receiptRepository;
+        _logger = logger;
     }
 
     public async Task LoadInsightsAsync()
@@ -98,7 +101,7 @@ public partial class InsightsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading insights: {ex.Message}");
+            _logger.LogError(ex, "Error loading insights");
         }
         finally
         {

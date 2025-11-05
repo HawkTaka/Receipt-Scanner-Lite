@@ -73,12 +73,14 @@ public static class MauiProgram
             var initTask = bootstrap.InitializeAsync();
             if (!initTask.Wait(TimeSpan.FromSeconds(30)))
             {
-                Console.WriteLine("Warning: Bootstrap initialization timed out after 30 seconds");
+                var logger = app.Services.GetRequiredService<ILogger<MauiApp>>();
+                logger.LogWarning("Bootstrap initialization timed out after 30 seconds");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Bootstrap error: {ex.Message}");
+            var logger = app.Services.GetRequiredService<ILogger<MauiApp>>();
+            logger.LogError(ex, "Bootstrap initialization failed");
             // Continue anyway - app can still function with manual data entry
         }
 

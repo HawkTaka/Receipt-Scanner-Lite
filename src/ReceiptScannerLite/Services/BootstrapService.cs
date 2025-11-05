@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using ReceiptScannerLite.Data;
 
 namespace ReceiptScannerLite.Services;
@@ -5,10 +6,12 @@ namespace ReceiptScannerLite.Services;
 public class BootstrapService : IBootstrapService
 {
     private readonly AppDb _db;
+    private readonly ILogger<BootstrapService> _logger;
 
-    public BootstrapService(AppDb db)
+    public BootstrapService(AppDb db, ILogger<BootstrapService> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     public async Task InitializeAsync()
@@ -30,11 +33,11 @@ public class BootstrapService : IBootstrapService
             // Initialize database
             await _db.InitializeAsync();
 
-            Console.WriteLine("Bootstrap completed successfully");
+            _logger.LogInformation("Bootstrap completed successfully");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Bootstrap error: {ex.Message}");
+            _logger.LogError(ex, "Bootstrap initialization failed");
             throw;
         }
     }
@@ -46,7 +49,7 @@ public class BootstrapService : IBootstrapService
         // Only copy if not already present
         if (File.Exists(targetFile))
         {
-            Console.WriteLine("Tessdata already exists, skipping copy");
+            _logger.LogDebug("Tessdata already exists at {TargetFile}, skipping copy", targetFile);
             return;
         }
 
@@ -61,26 +64,24 @@ public class BootstrapService : IBootstrapService
             using var assetStream = await FileSystem.OpenAppPackageFileAsync("tessdata/eng.traineddata");
             using var targetStream = File.Create(targetFile);
             await assetStream.CopyToAsync(targetStream);
-            Console.WriteLine($"Copied tessdata to: {targetFile}");
+            _logger.LogInformation("Copied tessdata to {TargetFile}", targetFile);
 #else
             // For Windows and other platforms
             var sourceFile = Path.Combine(AppContext.BaseDirectory, "Assets", "tessdata", "eng.traineddata");
             if (File.Exists(sourceFile))
             {
                 File.Copy(sourceFile, targetFile);
-                Console.WriteLine($"Copied tessdata to: {targetFile}");
+                _logger.LogInformation("Copied tessdata to {TargetFile}", targetFile);
             }
             else
             {
-                Console.WriteLine($"Warning: eng.traineddata not found at {sourceFile}");
-                Console.WriteLine("OCR functionality will not be available until tessdata is manually provided.");
+                _logger.LogWarning("eng.traineddata not found at {SourceFile}. OCR functionality will not be available until tessdata is manually provided", sourceFile);
             }
 #endif
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Warning: Failed to copy tessdata: {ex.Message}");
-            Console.WriteLine("OCR functionality may not be available.");
+            _logger.LogWarning(ex, "Failed to copy tessdata. OCR functionality may not be available");
         }
     }
 }

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using ReceiptScannerLite.Data.Models;
 using ReceiptScannerLite.Data.Repositories;
 using ReceiptScannerLite.Services;
@@ -14,6 +15,7 @@ public partial class ReceiptDetailViewModel : ObservableObject
     private readonly INavigationService _navigationService;
     private readonly IImageService _imageService;
     private readonly IDialogService _dialogService;
+    private readonly ILogger<ReceiptDetailViewModel> _logger;
 
     [ObservableProperty]
     private Receipt? _receipt;
@@ -41,13 +43,15 @@ public partial class ReceiptDetailViewModel : ObservableObject
         ILineItemRepository lineItemRepository,
         INavigationService navigationService,
         IImageService imageService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        ILogger<ReceiptDetailViewModel> logger)
     {
         _receiptRepository = receiptRepository;
         _lineItemRepository = lineItemRepository;
         _navigationService = navigationService;
         _imageService = imageService;
         _dialogService = dialogService;
+        _logger = logger;
     }
 
     public async Task LoadReceiptAsync(int receiptId)
@@ -74,7 +78,7 @@ public partial class ReceiptDetailViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading receipt: {ex.Message}");
+            _logger.LogError(ex, "Error loading receipt {ReceiptId}", receiptId);
         }
         finally
         {
@@ -99,7 +103,7 @@ public partial class ReceiptDetailViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading receipt image: {ex.Message}");
+            _logger.LogError(ex, "Error loading receipt image {ImagePath}", Receipt.ImagePath);
             HasImage = false;
             ImageDataUrl = null;
         }
@@ -150,7 +154,7 @@ public partial class ReceiptDetailViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error deleting receipt: {ex.Message}");
+            _logger.LogError(ex, "Error deleting receipt {ReceiptId}", Receipt.Id);
             await _dialogService.AlertAsync("Delete Failed", $"Failed to delete receipt: {ex.Message}");
         }
     }

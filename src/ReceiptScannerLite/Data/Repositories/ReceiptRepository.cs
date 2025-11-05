@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using ReceiptScannerLite.Data.Models;
 using SQLite;
 
@@ -7,11 +8,13 @@ public class ReceiptRepository : IReceiptRepository
 {
     private readonly AppDb _db;
     private readonly ILineItemRepository _lineItemRepository;
+    private readonly ILogger<ReceiptRepository> _logger;
 
-    public ReceiptRepository(AppDb db, ILineItemRepository lineItemRepository)
+    public ReceiptRepository(AppDb db, ILineItemRepository lineItemRepository, ILogger<ReceiptRepository> logger)
     {
         _db = db;
         _lineItemRepository = lineItemRepository;
+        _logger = logger;
     }
 
     public async Task<int> InsertAsync(Receipt receipt)
@@ -49,7 +52,7 @@ public class ReceiptRepository : IReceiptRepository
             catch (Exception ex)
             {
                 // Log but don't fail the delete operation if image cleanup fails
-                Console.WriteLine($"Warning: Failed to delete image file {receipt.ImagePath}: {ex.Message}");
+                _logger.LogWarning(ex, "Failed to delete image file {ImagePath}", receipt.ImagePath);
             }
         }
 

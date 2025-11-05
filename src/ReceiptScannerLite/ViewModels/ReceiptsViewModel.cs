@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using ReceiptScannerLite.Data.Models;
 using ReceiptScannerLite.Data.Repositories;
 using ReceiptScannerLite.Services;
@@ -13,6 +14,7 @@ public partial class ReceiptsViewModel : ObservableObject
     private readonly INavigationService _navigationService;
     private readonly ICategoryService _categoryService;
     private readonly IDialogService _dialogService;
+    private readonly ILogger<ReceiptsViewModel> _logger;
     private CancellationTokenSource? _searchDebounceTokenSource;
 
     [ObservableProperty]
@@ -39,12 +41,14 @@ public partial class ReceiptsViewModel : ObservableObject
         IReceiptRepository receiptRepository,
         INavigationService navigationService,
         ICategoryService categoryService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        ILogger<ReceiptsViewModel> logger)
     {
         _receiptRepository = receiptRepository;
         _navigationService = navigationService;
         _categoryService = categoryService;
         _dialogService = dialogService;
+        _logger = logger;
 
         // Add "All" to the beginning of the category list for filtering
         var allCategories = new List<string> { "All" };
@@ -82,7 +86,7 @@ public partial class ReceiptsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading receipts: {ex.Message}");
+            _logger.LogError(ex, "Error loading receipts");
         }
         finally
         {
@@ -170,7 +174,7 @@ public partial class ReceiptsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error deleting receipt: {ex.Message}");
+            _logger.LogError(ex, "Error deleting receipt {ReceiptId}", receipt.Id);
             await _dialogService.AlertAsync("Delete Failed", $"Failed to delete receipt: {ex.Message}");
         }
     }

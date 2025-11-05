@@ -14,6 +14,7 @@ public partial class EditReceiptViewModel : ObservableObject
     private readonly INavigationService _navigationService;
     private readonly IReceiptValidationService _validationService;
     private readonly ICategoryService _categoryService;
+    private readonly IErrorMessageService _errorMessageService;
 
     private int _receiptId;
 
@@ -62,13 +63,15 @@ public partial class EditReceiptViewModel : ObservableObject
         ILineItemRepository lineItemRepository,
         INavigationService navigationService,
         IReceiptValidationService validationService,
-        ICategoryService categoryService)
+        ICategoryService categoryService,
+        IErrorMessageService errorMessageService)
     {
         _receiptRepository = receiptRepository;
         _lineItemRepository = lineItemRepository;
         _navigationService = navigationService;
         _validationService = validationService;
         _categoryService = categoryService;
+        _errorMessageService = errorMessageService;
 
         Categories = _categoryService.GetAllCategories();
         _category = _categoryService.GetDefaultCategory();
@@ -115,7 +118,7 @@ public partial class EditReceiptViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error loading receipt: {ex.Message}";
+            StatusMessage = _errorMessageService.GetLoadErrorMessage(ex);
         }
         finally
         {
@@ -200,7 +203,7 @@ public partial class EditReceiptViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error saving: {ex.Message}";
+            StatusMessage = _errorMessageService.GetSaveErrorMessage(ex);
         }
         finally
         {

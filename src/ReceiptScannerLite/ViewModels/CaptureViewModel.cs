@@ -11,6 +11,7 @@ public partial class CaptureViewModel : ObservableObject
     private readonly IOcrService _ocrService;
     private readonly IParseService _parseService;
     private readonly INavigationService _navigationService;
+    private readonly IErrorMessageService _errorMessageService;
 
     [ObservableProperty]
     private string? _capturedImagePath;
@@ -26,13 +27,15 @@ public partial class CaptureViewModel : ObservableObject
         IImagePreprocessService preprocessService,
         IOcrService ocrService,
         IParseService parseService,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IErrorMessageService errorMessageService)
     {
         _fileService = fileService;
         _preprocessService = preprocessService;
         _ocrService = ocrService;
         _parseService = parseService;
         _navigationService = navigationService;
+        _errorMessageService = errorMessageService;
     }
 
     [RelayCommand]
@@ -55,11 +58,11 @@ public partial class CaptureViewModel : ObservableObject
         }
         catch (PermissionException ex)
         {
-            StatusMessage = $"Permission denied: {ex.Message}";
+            StatusMessage = _errorMessageService.GetFriendlyMessage(ex, "capturing photo");
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            StatusMessage = _errorMessageService.GetImageErrorMessage(ex);
         }
     }
 
@@ -83,11 +86,11 @@ public partial class CaptureViewModel : ObservableObject
         }
         catch (PermissionException ex)
         {
-            StatusMessage = $"Permission denied: {ex.Message}";
+            StatusMessage = _errorMessageService.GetFriendlyMessage(ex, "selecting photo");
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            StatusMessage = _errorMessageService.GetImageErrorMessage(ex);
         }
     }
 
@@ -134,7 +137,7 @@ public partial class CaptureViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            StatusMessage = _errorMessageService.GetOcrErrorMessage(ex);
         }
         finally
         {

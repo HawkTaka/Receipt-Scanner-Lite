@@ -10,6 +10,7 @@ public partial class ExportViewModel : ObservableObject
     private readonly IReceiptRepository _receiptRepository;
     private readonly ILineItemRepository _lineItemRepository;
     private readonly ICsvExportService _csvExportService;
+    private readonly IErrorMessageService _errorMessageService;
 
     [ObservableProperty]
     private DateTime? _fromDate;
@@ -32,11 +33,13 @@ public partial class ExportViewModel : ObservableObject
     public ExportViewModel(
         IReceiptRepository receiptRepository,
         ILineItemRepository lineItemRepository,
-        ICsvExportService csvExportService)
+        ICsvExportService csvExportService,
+        IErrorMessageService errorMessageService)
     {
         _receiptRepository = receiptRepository;
         _lineItemRepository = lineItemRepository;
         _csvExportService = csvExportService;
+        _errorMessageService = errorMessageService;
     }
 
     public async Task LoadStatsAsync()
@@ -66,7 +69,7 @@ public partial class ExportViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            StatusMessage = _errorMessageService.GetLoadErrorMessage(ex);
         }
     }
 
@@ -122,7 +125,7 @@ public partial class ExportViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Export failed: {ex.Message}";
+            StatusMessage = _errorMessageService.GetFriendlyMessage(ex, "exporting receipts");
         }
         finally
         {
@@ -199,7 +202,7 @@ public partial class ExportViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Export failed: {ex.Message}";
+            StatusMessage = _errorMessageService.GetFriendlyMessage(ex, "exporting line items");
         }
         finally
         {

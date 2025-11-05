@@ -15,6 +15,7 @@ public partial class ReceiptsViewModel : ObservableObject
     private readonly ICategoryService _categoryService;
     private readonly IDialogService _dialogService;
     private readonly ILogger<ReceiptsViewModel> _logger;
+    private readonly IErrorMessageService _errorMessageService;
     private CancellationTokenSource? _searchDebounceTokenSource;
 
     [ObservableProperty]
@@ -42,13 +43,15 @@ public partial class ReceiptsViewModel : ObservableObject
         INavigationService navigationService,
         ICategoryService categoryService,
         IDialogService dialogService,
-        ILogger<ReceiptsViewModel> logger)
+        ILogger<ReceiptsViewModel> logger,
+        IErrorMessageService errorMessageService)
     {
         _receiptRepository = receiptRepository;
         _navigationService = navigationService;
         _categoryService = categoryService;
         _dialogService = dialogService;
         _logger = logger;
+        _errorMessageService = errorMessageService;
 
         // Add "All" to the beginning of the category list for filtering
         var allCategories = new List<string> { "All" };
@@ -175,7 +178,8 @@ public partial class ReceiptsViewModel : ObservableObject
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting receipt {ReceiptId}", receipt.Id);
-            await _dialogService.AlertAsync("Delete Failed", $"Failed to delete receipt: {ex.Message}");
+            var errorMessage = _errorMessageService.GetDeleteErrorMessage(ex);
+            await _dialogService.AlertAsync("Delete Failed", errorMessage);
         }
     }
 

@@ -16,6 +16,7 @@ public partial class ReceiptDetailViewModel : ObservableObject
     private readonly IImageService _imageService;
     private readonly IDialogService _dialogService;
     private readonly ILogger<ReceiptDetailViewModel> _logger;
+    private readonly IErrorMessageService _errorMessageService;
 
     [ObservableProperty]
     private Receipt? _receipt;
@@ -44,7 +45,8 @@ public partial class ReceiptDetailViewModel : ObservableObject
         INavigationService navigationService,
         IImageService imageService,
         IDialogService dialogService,
-        ILogger<ReceiptDetailViewModel> logger)
+        ILogger<ReceiptDetailViewModel> logger,
+        IErrorMessageService errorMessageService)
     {
         _receiptRepository = receiptRepository;
         _lineItemRepository = lineItemRepository;
@@ -52,6 +54,7 @@ public partial class ReceiptDetailViewModel : ObservableObject
         _imageService = imageService;
         _dialogService = dialogService;
         _logger = logger;
+        _errorMessageService = errorMessageService;
     }
 
     public async Task LoadReceiptAsync(int receiptId)
@@ -155,7 +158,8 @@ public partial class ReceiptDetailViewModel : ObservableObject
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting receipt {ReceiptId}", Receipt.Id);
-            await _dialogService.AlertAsync("Delete Failed", $"Failed to delete receipt: {ex.Message}");
+            var errorMessage = _errorMessageService.GetDeleteErrorMessage(ex);
+            await _dialogService.AlertAsync("Delete Failed", errorMessage);
         }
     }
 

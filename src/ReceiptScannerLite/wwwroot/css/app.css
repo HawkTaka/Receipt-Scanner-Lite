@@ -1,0 +1,545 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: #f5f5f5;
+}
+
+/* Layout */
+.page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.navbar {
+    background: #512BD4;
+    color: white;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.app-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.nav-link:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.main-content {
+    flex: 1;
+    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.page-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #512BD4;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #3E1FA5;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #545b62;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #c82333;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-control, .form-control-sm {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-control-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* Status Messages */
+.status-message {
+    padding: 1rem;
+    margin: 1rem 0;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+    color: #155724;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #666;
+}
+
+.loading-indicator, .processing-indicator {
+    text-align: center;
+    padding: 2rem;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #512BD4;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Home Page */
+.home-container {
+    text-align: center;
+}
+
+.home-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.home-info {
+    text-align: left;
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
+/* Capture Page */
+.capture-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.image-preview {
+    margin: 2rem 0;
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 400px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: block;
+    margin: 1rem 0;
+}
+
+.preview-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Review Page */
+.line-items-section {
+    margin: 2rem 0;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.line-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.line-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+/* Receipts Page */
+.filters-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.receipts-list {
+    display: grid;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.receipt-card {
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.receipt-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.receipt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.receipt-total {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #512BD4;
+}
+
+.receipt-details {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.receipt-category {
+    display: inline-block;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    background: #e9ecef;
+    border-radius: 12px;
+    font-size: 0.875rem;
+}
+
+.receipt-notes {
+    color: #666;
+    font-size: 0.875rem;
+    margin: 0.5rem 0;
+}
+
+.receipt-actions {
+    margin-top: 0.5rem;
+}
+
+.receipts-summary {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Receipt Detail Page */
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.detail-section {
+    margin: 2rem 0;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.detail-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.detail-label {
+    font-weight: 500;
+}
+
+.detail-value.total {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #512BD4;
+}
+
+.detail-notes {
+    margin-top: 1rem;
+}
+
+.line-items-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.line-item-row {
+    padding: 0.5rem;
+    background: white;
+    border-radius: 4px;
+}
+
+.item-description {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.item-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.item-total {
+    font-weight: bold;
+    color: #512BD4;
+}
+
+.raw-text {
+    background: white;
+    padding: 1rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.detail-actions {
+    margin-top: 2rem;
+}
+
+/* Insights Page */
+.insights-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.insights-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    padding: 1.5rem;
+    background: #f9f9f9;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #512BD4;
+    margin: 0.5rem 0;
+}
+
+.insights-section {
+    margin: 2rem 0;
+}
+
+.data-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.table-header, .table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.table-header {
+    font-weight: bold;
+    background: #e9ecef;
+}
+
+.table-row {
+    background: white;
+}
+
+/* Export Page */
+.export-filters {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.export-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.export-actions {
+    display: flex;
+    gap: 1rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.export-info {
+    margin-top: 3rem;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.export-info code {
+    display: block;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+    overflow-x: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .line-item {
+        grid-template-columns: 1fr;
+    }
+
+    .table-header, .table-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .detail-item {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}

@@ -1,0 +1,94 @@
+@page "/export"
+@inject ExportViewModel ViewModel
+
+<div class="page-container">
+    <h2>Export Data</h2>
+
+    <div class="export-filters">
+        <h3>Date Range (Optional)</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label>From Date</label>
+                <input type="date" @bind="ViewModel.FromDate" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label>To Date</label>
+                <input type="date" @bind="ViewModel.ToDate" class="form-control" />
+            </div>
+        </div>
+    </div>
+
+    <div class="export-stats">
+        <div class="stat-card">
+            <h4>Receipts to Export</h4>
+            <p class="stat-value">@ViewModel.ReceiptCount</p>
+        </div>
+        <div class="stat-card">
+            <h4>Line Items to Export</h4>
+            <p class="stat-value">@ViewModel.LineItemCount</p>
+        </div>
+    </div>
+
+    <div class="export-actions">
+        <button class="btn btn-primary" @onclick="ExportReceipts" disabled="@ViewModel.IsExporting">
+            📄 Export Receipts CSV
+        </button>
+        <button class="btn btn-secondary" @onclick="ExportLineItems" disabled="@ViewModel.IsExporting">
+            📄 Export Line Items CSV
+        </button>
+    </div>
+
+    @if (ViewModel.IsExporting)
+    {
+        <div class="processing-indicator">
+            <div class="spinner"></div>
+            <p>Exporting data...</p>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(ViewModel.StatusMessage))
+    {
+        <div class="status-message">
+            @ViewModel.StatusMessage
+        </div>
+    }
+
+    <div class="export-info">
+        <h3>About CSV Export</h3>
+        <p>CSV files will be saved to your app's data directory:</p>
+        <code>@GetExportPath()</code>
+
+        <h4>Receipts CSV Columns:</h4>
+        <ul>
+            <li>Id, Date, StoreName, Subtotal, Tax, Total, Category, Notes, ImagePath, CreatedUtc, UpdatedUtc</li>
+        </ul>
+
+        <h4>Line Items CSV Columns:</h4>
+        <ul>
+            <li>Id, ReceiptId, Date, StoreName, Description, Quantity, UnitPrice, LineTotal, Position</li>
+        </ul>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.LoadStatsAsync();
+    }
+
+    private async Task ExportReceipts()
+    {
+        await ViewModel.ExportReceiptsCommand.ExecuteAsync(null);
+    }
+
+    private async Task ExportLineItems()
+    {
+        await ViewModel.ExportLineItemsCommand.ExecuteAsync(null);
+    }
+
+    private string GetExportPath()
+    {
+        return FileSystem.Current.AppDataDirectory;
+    }
+}

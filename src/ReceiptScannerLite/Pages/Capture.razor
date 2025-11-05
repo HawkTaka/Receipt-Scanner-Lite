@@ -1,0 +1,81 @@
+@page "/capture"
+@inject CaptureViewModel ViewModel
+
+<div class="page-container">
+    <h2>Capture Receipt</h2>
+
+    <div class="capture-actions">
+        <button class="btn btn-primary" @onclick="CapturePhoto" disabled="@ViewModel.IsProcessing">
+            📷 Take Photo
+        </button>
+        <button class="btn btn-secondary" @onclick="PickPhoto" disabled="@ViewModel.IsProcessing">
+            🖼️ Pick from Gallery
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewModel.CapturedImagePath))
+    {
+        <div class="image-preview">
+            <h3>Preview</h3>
+            <img src="@GetImageDataUrl()" alt="Receipt" class="preview-image" />
+
+            <div class="preview-actions">
+                <button class="btn btn-primary" @onclick="ProcessImage" disabled="@ViewModel.IsProcessing">
+                    🔍 Run OCR
+                </button>
+                <button class="btn btn-danger" @onclick="ClearImage" disabled="@ViewModel.IsProcessing">
+                    ❌ Clear
+                </button>
+            </div>
+        </div>
+    }
+
+    @if (ViewModel.IsProcessing)
+    {
+        <div class="processing-indicator">
+            <div class="spinner"></div>
+            <p>@ViewModel.StatusMessage</p>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(ViewModel.StatusMessage) && !ViewModel.IsProcessing)
+    {
+        <div class="status-message">
+            @ViewModel.StatusMessage
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Subscribe to property changes if needed
+    }
+
+    private async Task CapturePhoto()
+    {
+        await ViewModel.CapturePhotoCommand.ExecuteAsync(null);
+    }
+
+    private async Task PickPhoto()
+    {
+        await ViewModel.PickPhotoCommand.ExecuteAsync(null);
+    }
+
+    private async Task ProcessImage()
+    {
+        await ViewModel.ProcessImageCommand.ExecuteAsync(null);
+    }
+
+    private void ClearImage()
+    {
+        ViewModel.ClearImageCommand.Execute(null);
+    }
+
+    private string GetImageDataUrl()
+    {
+        // In a real app, we'd convert the image to a data URL or use a proper image component
+        // For now, just return the file path (won't work in Blazor but shows the intent)
+        return ViewModel.CapturedImagePath ?? "";
+    }
+}

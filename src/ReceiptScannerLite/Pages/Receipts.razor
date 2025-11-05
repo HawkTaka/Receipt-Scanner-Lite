@@ -1,0 +1,115 @@
+@page "/receipts"
+@inject ReceiptsViewModel ViewModel
+
+<div class="page-container">
+    <h2>Receipts</h2>
+
+    <div class="filters-section">
+        <div class="form-group">
+            <input type="text" @bind="ViewModel.SearchText" placeholder="Search by store..." class="form-control" />
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Category</label>
+                <select @bind="ViewModel.SelectedCategory" class="form-control">
+                    @foreach (var category in ViewModel.Categories)
+                    {
+                        <option value="@category">@category</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>From Date</label>
+                <input type="date" @bind="ViewModel.FromDate" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label>To Date</label>
+                <input type="date" @bind="ViewModel.ToDate" class="form-control" />
+            </div>
+        </div>
+
+        <div class="filter-actions">
+            <button class="btn btn-secondary" @onclick="ClearFilters">Clear Filters</button>
+            <button class="btn btn-primary" @onclick="Refresh">🔄 Refresh</button>
+        </div>
+    </div>
+
+    @if (ViewModel.IsLoading)
+    {
+        <div class="loading-indicator">
+            <div class="spinner"></div>
+            <p>Loading receipts...</p>
+        </div>
+    }
+    else if (!ViewModel.Receipts.Any())
+    {
+        <div class="empty-state">
+            <p>No receipts found.</p>
+            <a href="/capture" class="btn btn-primary">Scan Your First Receipt</a>
+        </div>
+    }
+    else
+    {
+        <div class="receipts-list">
+            @foreach (var receipt in ViewModel.Receipts)
+            {
+                <div class="receipt-card" @onclick="() => ViewReceipt(receipt)">
+                    <div class="receipt-header">
+                        <h3>@(receipt.StoreName ?? "Unknown Store")</h3>
+                        <span class="receipt-total">@receipt.Total.ToString("C")</span>
+                    </div>
+                    <div class="receipt-details">
+                        <span class="receipt-date">@receipt.Date.ToString("MMM dd, yyyy")</span>
+                        <span class="receipt-category badge">@receipt.Category</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(receipt.Notes))
+                    {
+                        <p class="receipt-notes">@receipt.Notes</p>
+                    }
+                    <div class="receipt-actions">
+                        <button class="btn btn-sm btn-danger" @onclick:stopPropagation="true" @onclick="() => DeleteReceipt(receipt)">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="receipts-summary">
+            <p>Total: @ViewModel.Receipts.Count receipt(s) | Sum: @ViewModel.Receipts.Sum(r => r.Total).ToString("C")</p>
+        </div>
+    }
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.LoadReceiptsAsync();
+    }
+
+    private async Task Refresh()
+    {
+        await ViewModel.RefreshCommand.ExecuteAsync(null);
+    }
+
+    private void ClearFilters()
+    {
+        ViewModel.ClearFiltersCommand.Execute(null);
+    }
+
+    private void ViewReceipt(Receipt receipt)
+    {
+        ViewModel.ViewReceiptCommand.Execute(receipt);
+        // In a real app, navigate to detail page
+        // NavigationManager.NavigateTo($"/receipt-detail/{receipt.Id}");
+    }
+
+    private async Task DeleteReceipt(Receipt receipt)
+    {
+        // In a real app, show a confirmation dialog first
+        await ViewModel.DeleteReceiptCommand.ExecuteAsync(receipt);
+    }
+}

@@ -1,0 +1,111 @@
+@page "/review"
+@inject ReviewViewModel ViewModel
+
+<div class="page-container">
+    <h2>Review Receipt</h2>
+
+    <div class="form-group">
+        <label>Store Name</label>
+        <input type="text" @bind="ViewModel.StoreName" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Date</label>
+        <input type="date" @bind="ViewModel.Date" class="form-control" />
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label>Subtotal</label>
+            <input type="number" step="0.01" @bind="ViewModel.Subtotal" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label>Tax</label>
+            <input type="number" step="0.01" @bind="ViewModel.Tax" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label>Total *</label>
+            <input type="number" step="0.01" @bind="ViewModel.Total" class="form-control" required />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Category</label>
+        <select @bind="ViewModel.Category" class="form-control">
+            @foreach (var category in ViewModel.Categories)
+            {
+                <option value="@category">@category</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Notes</label>
+        <textarea @bind="ViewModel.Notes" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="line-items-section">
+        <div class="section-header">
+            <h3>Line Items</h3>
+            <button class="btn btn-sm btn-secondary" @onclick="AddLineItem">
+                ➕ Add Item
+            </button>
+        </div>
+
+        @if (ViewModel.LineItems.Any())
+        {
+            <div class="line-items-list">
+                @foreach (var item in ViewModel.LineItems)
+                {
+                    <div class="line-item">
+                        <input type="text" @bind="item.Description" placeholder="Description" class="form-control" />
+                        <input type="number" step="0.01" @bind="item.Quantity" placeholder="Qty" class="form-control-sm" />
+                        <input type="number" step="0.01" @bind="item.UnitPrice" placeholder="Unit Price" class="form-control-sm" />
+                        <input type="number" step="0.01" @bind="item.LineTotal" placeholder="Total" class="form-control-sm" />
+                        <button class="btn btn-sm btn-danger" @onclick="() => RemoveLineItem(item)">❌</button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="form-actions">
+        <button class="btn btn-primary" @onclick="Save" disabled="@ViewModel.IsSaving">
+            💾 Save Receipt
+        </button>
+        <button class="btn btn-secondary" @onclick="Cancel" disabled="@ViewModel.IsSaving">
+            ❌ Cancel
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewModel.StatusMessage))
+    {
+        <div class="status-message">
+            @ViewModel.StatusMessage
+        </div>
+    }
+</div>
+
+@code {
+    private async Task Save()
+    {
+        await ViewModel.SaveCommand.ExecuteAsync(null);
+    }
+
+    private void Cancel()
+    {
+        ViewModel.CancelCommand.Execute(null);
+    }
+
+    private void AddLineItem()
+    {
+        ViewModel.AddLineItemCommand.Execute(null);
+    }
+
+    private void RemoveLineItem(LineItemEdit item)
+    {
+        ViewModel.RemoveLineItemCommand.Execute(item);
+    }
+}

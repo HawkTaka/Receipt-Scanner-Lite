@@ -1,0 +1,35 @@
+@page "/"
+
+<div class="home-container">
+    <h1>Welcome to Receipt Scanner Lite</h1>
+    <p>A simple, offline-first receipt scanner and manager.</p>
+
+    <div class="home-actions">
+        <a href="/capture" class="btn btn-primary">
+            📷 Scan Receipt
+        </a>
+        <a href="/receipts" class="btn btn-secondary">
+            📋 View Receipts
+        </a>
+    </div>
+
+    <div class="home-info">
+        <h2>Features</h2>
+        <ul>
+            <li>📸 Capture or import receipt photos</li>
+            <li>🔍 On-device OCR using Tesseract</li>
+            <li>✏️ Review and edit parsed data</li>
+            <li>💾 Local SQLite storage</li>
+            <li>📊 Insights and analytics</li>
+            <li>📤 CSV export</li>
+        </ul>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Navigate to capture page by default
+        // NavigationManager.NavigateTo("/capture");
+    }
+}

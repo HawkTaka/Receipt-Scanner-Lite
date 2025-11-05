@@ -1,0 +1,142 @@
+@page "/receipt-detail/{ReceiptId:int}"
+@inject ReceiptDetailViewModel ViewModel
+
+<div class="page-container">
+    @if (ViewModel.IsLoading)
+    {
+        <div class="loading-indicator">
+            <div class="spinner"></div>
+            <p>Loading receipt...</p>
+        </div>
+    }
+    else if (ViewModel.Receipt == null)
+    {
+        <div class="empty-state">
+            <p>Receipt not found.</p>
+            <a href="/receipts" class="btn btn-secondary">Back to Receipts</a>
+        </div>
+    }
+    else
+    {
+        <div class="detail-header">
+            <h2>@(ViewModel.Receipt.StoreName ?? "Unknown Store")</h2>
+            <button class="btn btn-secondary" @onclick="GoBack">← Back</button>
+        </div>
+
+        <div class="detail-section">
+            <h3>Details</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Date:</span>
+                    <span class="detail-value">@ViewModel.Receipt.Date.ToString("MMMM dd, yyyy")</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Category:</span>
+                    <span class="detail-value badge">@ViewModel.Receipt.Category</span>
+                </div>
+                @if (ViewModel.Receipt.Subtotal.HasValue)
+                {
+                    <div class="detail-item">
+                        <span class="detail-label">Subtotal:</span>
+                        <span class="detail-value">@ViewModel.Receipt.Subtotal.Value.ToString("C")</span>
+                    </div>
+                }
+                @if (ViewModel.Receipt.Tax.HasValue)
+                {
+                    <div class="detail-item">
+                        <span class="detail-label">Tax:</span>
+                        <span class="detail-value">@ViewModel.Receipt.Tax.Value.ToString("C")</span>
+                    </div>
+                }
+                <div class="detail-item">
+                    <span class="detail-label">Total:</span>
+                    <span class="detail-value total">@ViewModel.Receipt.Total.ToString("C")</span>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(ViewModel.Receipt.Notes))
+            {
+                <div class="detail-notes">
+                    <span class="detail-label">Notes:</span>
+                    <p>@ViewModel.Receipt.Notes</p>
+                </div>
+            }
+        </div>
+
+        @if (ViewModel.LineItems.Any())
+        {
+            <div class="detail-section">
+                <h3>Line Items</h3>
+                <div class="line-items-table">
+                    @foreach (var item in ViewModel.LineItems)
+                    {
+                        <div class="line-item-row">
+                            <span class="item-description">@item.Description</span>
+                            <div class="item-details">
+                                @if (item.Quantity.HasValue)
+                                {
+                                    <span>Qty: @item.Quantity.Value</span>
+                                }
+                                @if (item.UnitPrice.HasValue)
+                                {
+                                    <span>@ @item.UnitPrice.Value.ToString("C")</span>
+                                }
+                                @if (item.LineTotal.HasValue)
+                                {
+                                    <span class="item-total">= @item.LineTotal.Value.ToString("C")</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(ViewModel.Receipt.RawText))
+        {
+            <div class="detail-section">
+                <div class="section-header">
+                    <h3>Raw OCR Text</h3>
+                    <button class="btn btn-sm" @onclick="ToggleRawText">
+                        @(ViewModel.ShowRawText ? "Hide" : "Show")
+                    </button>
+                </div>
+
+                @if (ViewModel.ShowRawText)
+                {
+                    <pre class="raw-text">@ViewModel.Receipt.RawText</pre>
+                }
+            </div>
+        }
+
+        <div class="detail-actions">
+            <button class="btn btn-danger" @onclick="Delete">🗑️ Delete Receipt</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int ReceiptId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.LoadReceiptAsync(ReceiptId);
+    }
+
+    private void GoBack()
+    {
+        ViewModel.GoBackCommand.Execute(null);
+    }
+
+    private void ToggleRawText()
+    {
+        ViewModel.ToggleRawTextCommand.Execute(null);
+    }
+
+    private async Task Delete()
+    {
+        // In a real app, show confirmation dialog
+        await ViewModel.DeleteCommand.ExecuteAsync(null);
+    }
+}

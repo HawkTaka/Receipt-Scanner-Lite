@@ -1,0 +1,97 @@
+@page "/insights"
+@inject InsightsViewModel ViewModel
+
+<div class="page-container">
+    <h2>Insights</h2>
+
+    <div class="insights-header">
+        <button class="btn btn-primary" @onclick="Refresh">🔄 Refresh</button>
+    </div>
+
+    @if (ViewModel.IsLoading)
+    {
+        <div class="loading-indicator">
+            <div class="spinner"></div>
+            <p>Loading insights...</p>
+        </div>
+    }
+    else
+    {
+        <div class="insights-summary">
+            <div class="stat-card">
+                <h3>Total Receipts</h3>
+                <p class="stat-value">@ViewModel.ReceiptCount</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Amount</h3>
+                <p class="stat-value">@ViewModel.GrandTotal.ToString("C")</p>
+            </div>
+        </div>
+
+        @if (ViewModel.MonthlyTotals.Any())
+        {
+            <div class="insights-section">
+                <h3>Monthly Totals</h3>
+                <div class="data-table">
+                    <div class="table-header">
+                        <span>Month</span>
+                        <span>Count</span>
+                        <span>Total</span>
+                    </div>
+                    @foreach (var month in ViewModel.MonthlyTotals)
+                    {
+                        <div class="table-row">
+                            <span>@month.MonthName</span>
+                            <span>@month.Count</span>
+                            <span>@month.Total.ToString("C")</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (ViewModel.CategoryBreakdowns.Any())
+        {
+            <div class="insights-section">
+                <h3>Category Breakdown</h3>
+                <div class="data-table">
+                    <div class="table-header">
+                        <span>Category</span>
+                        <span>Count</span>
+                        <span>Total</span>
+                        <span>%</span>
+                    </div>
+                    @foreach (var category in ViewModel.CategoryBreakdowns)
+                    {
+                        <div class="table-row">
+                            <span>@category.Category</span>
+                            <span>@category.Count</span>
+                            <span>@category.Total.ToString("C")</span>
+                            <span>@category.Percentage.ToString("F1")%</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (!ViewModel.MonthlyTotals.Any() && !ViewModel.CategoryBreakdowns.Any())
+        {
+            <div class="empty-state">
+                <p>No data available yet.</p>
+                <a href="/capture" class="btn btn-primary">Scan Your First Receipt</a>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await ViewModel.LoadInsightsAsync();
+    }
+
+    private async Task Refresh()
+    {
+        await ViewModel.RefreshCommand.ExecuteAsync(null);
+    }
+}

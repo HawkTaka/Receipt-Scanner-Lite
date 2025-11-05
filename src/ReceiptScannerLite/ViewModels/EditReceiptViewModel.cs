@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ReceiptScannerLite.Data.Models;
 using ReceiptScannerLite.Data.Repositories;
+using ReceiptScannerLite.Models;
 using ReceiptScannerLite.Services;
 using System.Collections.ObjectModel;
 
@@ -335,37 +336,5 @@ public partial class EditReceiptViewModel : ObservableObject
         HasValidationErrors = !string.IsNullOrEmpty(TotalError) ||
                                !string.IsNullOrEmpty(DateError) ||
                                !string.IsNullOrEmpty(CategoryError);
-    }
-}
-
-public class LineItemEdit : ObservableObject
-{
-    private string? _description;
-    private decimal? _quantity;
-    private decimal? _unitPrice;
-    private decimal? _lineTotal;
-
-    public string? Description
-    {
-        get => _description;
-        set => SetProperty(ref _description, value);
-    }
-
-    public decimal? Quantity
-    {
-        get => _quantity;
-        set => SetProperty(ref _quantity, value);
-    }
-
-    public decimal? UnitPrice
-    {
-        get => _unitPrice;
-        set => SetProperty(ref _unitPrice, value);
-    }
-
-    public decimal? LineTotal
-    {
-        get => _lineTotal;
-        set => SetProperty(ref _lineTotal, value);
     }
 }

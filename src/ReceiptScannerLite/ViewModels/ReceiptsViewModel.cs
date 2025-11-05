@@ -12,6 +12,7 @@ public partial class ReceiptsViewModel : ObservableObject
     private readonly IReceiptRepository _receiptRepository;
     private readonly INavigationService _navigationService;
     private readonly ICategoryService _categoryService;
+    private readonly IDialogService _dialogService;
     private CancellationTokenSource? _searchDebounceTokenSource;
 
     [ObservableProperty]
@@ -37,11 +38,13 @@ public partial class ReceiptsViewModel : ObservableObject
     public ReceiptsViewModel(
         IReceiptRepository receiptRepository,
         INavigationService navigationService,
-        ICategoryService categoryService)
+        ICategoryService categoryService,
+        IDialogService dialogService)
     {
         _receiptRepository = receiptRepository;
         _navigationService = navigationService;
         _categoryService = categoryService;
+        _dialogService = dialogService;
 
         // Add "All" to the beginning of the category list for filtering
         var allCategories = new List<string> { "All" };
@@ -99,6 +102,19 @@ public partial class ReceiptsViewModel : ObservableObject
     [RelayCommand]
     private async Task DeleteReceiptAsync(Receipt receipt)
     {
+        // Show confirmation dialog
+        var storeName = string.IsNullOrWhiteSpace(receipt.StoreName) ? "Unknown Store" : receipt.StoreName;
+        var confirmed = await _dialogService.ConfirmAsync(
+            "Delete Receipt",
+            $"Are you sure you want to delete the receipt from {storeName} on {receipt.Date:d}? This action cannot be undone.",
+            "Delete",
+            "Cancel");
+
+        if (!confirmed)
+        {
+            return; // User cancelled
+        }
+
         try
         {
             await _receiptRepository.DeleteAsync(receipt.Id);
@@ -107,6 +123,7 @@ public partial class ReceiptsViewModel : ObservableObject
         catch (Exception ex)
         {
             Console.WriteLine($"Error deleting receipt: {ex.Message}");
+            await _dialogService.AlertAsync("Delete Failed", $"Failed to delete receipt: {ex.Message}");
         }
     }
 

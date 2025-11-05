@@ -43,6 +43,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<ICategoryService, CategoryService>();
         builder.Services.AddSingleton<IReceiptValidationService, ReceiptValidationService>();
+        builder.Services.AddSingleton<IDialogService, DialogService>();
 
         // OCR Service - requires tessdata path
         builder.Services.AddSingleton<IOcrService>(sp =>

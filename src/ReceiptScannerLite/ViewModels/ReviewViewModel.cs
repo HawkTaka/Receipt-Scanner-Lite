@@ -10,6 +10,7 @@ public partial class ReviewViewModel : ObservableObject
 {
     private readonly IReceiptRepository _receiptRepository;
     private readonly ILineItemRepository _lineItemRepository;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     private string? _storeName;
@@ -61,10 +62,12 @@ public partial class ReviewViewModel : ObservableObject
 
     public ReviewViewModel(
         IReceiptRepository receiptRepository,
-        ILineItemRepository lineItemRepository)
+        ILineItemRepository lineItemRepository,
+        INavigationService navigationService)
     {
         _receiptRepository = receiptRepository;
         _lineItemRepository = lineItemRepository;
+        _navigationService = navigationService;
     }
 
     public void LoadParseResult(string imagePath, string rawText, Services.ParseResult? parseResult)
@@ -161,7 +164,7 @@ public partial class ReviewViewModel : ObservableObject
 
             // Navigate back to receipts list
             await Task.Delay(500);
-            // Shell.Current.GoToAsync("//receipts");
+            _navigationService.NavigateTo("/receipts");
         }
         catch (Exception ex)
         {
@@ -176,8 +179,7 @@ public partial class ReviewViewModel : ObservableObject
     [RelayCommand]
     private void Cancel()
     {
-        // Navigate back
-        // Shell.Current.GoToAsync("..");
+        _navigationService.NavigateBack();
     }
 }
 

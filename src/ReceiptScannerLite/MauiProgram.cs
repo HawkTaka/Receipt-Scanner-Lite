@@ -39,6 +39,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IImagePreprocessService, ImagePreprocessService>();
         builder.Services.AddSingleton<IParseService, ParseService>();
         builder.Services.AddSingleton<ICsvExportService, CsvExportService>();
+        builder.Services.AddSingleton<INavigationService, NavigationService>();
 
         // OCR Service - requires tessdata path
         builder.Services.AddSingleton<IOcrService>(sp =>
@@ -57,19 +58,23 @@ public static class MauiProgram
 
         var app = builder.Build();
 
-        // Initialize app on startup
-        Task.Run(async () =>
+        // Initialize app on startup - use blocking wait to ensure initialization completes
+        // before app becomes fully available
+        try
         {
-            try
+            var bootstrap = app.Services.GetRequiredService<IBootstrapService>();
+            // Use Wait() with timeout to block startup until initialization completes
+            var initTask = bootstrap.InitializeAsync();
+            if (!initTask.Wait(TimeSpan.FromSeconds(30)))
             {
-                var bootstrap = app.Services.GetRequiredService<IBootstrapService>();
-                await bootstrap.InitializeAsync();
+                Console.WriteLine("Warning: Bootstrap initialization timed out after 30 seconds");
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Bootstrap error: {ex.Message}");
-            }
-        });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Bootstrap error: {ex.Message}");
+            // Continue anyway - app can still function with manual data entry
+        }
 
         return app;
     }

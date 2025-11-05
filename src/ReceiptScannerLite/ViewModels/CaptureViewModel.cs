@@ -10,6 +10,7 @@ public partial class CaptureViewModel : ObservableObject
     private readonly IImagePreprocessService _preprocessService;
     private readonly IOcrService _ocrService;
     private readonly IParseService _parseService;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     private string? _capturedImagePath;
@@ -24,12 +25,14 @@ public partial class CaptureViewModel : ObservableObject
         IFileService fileService,
         IImagePreprocessService preprocessService,
         IOcrService ocrService,
-        IParseService parseService)
+        IParseService parseService,
+        INavigationService navigationService)
     {
         _fileService = fileService;
         _preprocessService = preprocessService;
         _ocrService = ocrService;
         _parseService = parseService;
+        _navigationService = navigationService;
     }
 
     [RelayCommand]
@@ -134,10 +137,13 @@ public partial class CaptureViewModel : ObservableObject
 
     private Task NavigateToReview(string rawText, ParseResult? parseResult)
     {
-        // This will be implemented with actual navigation
-        // For now, just a placeholder
-        // In a real app, you'd use Shell.Current.GoToAsync or pass data via a service
-        StatusMessage = "Ready to review. (Navigation not yet implemented)";
+        if (string.IsNullOrEmpty(CapturedImagePath))
+        {
+            StatusMessage = "Error: No image captured";
+            return Task.CompletedTask;
+        }
+
+        _navigationService.NavigateToReview(CapturedImagePath, rawText, parseResult);
         return Task.CompletedTask;
     }
 

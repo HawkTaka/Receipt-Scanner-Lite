@@ -14,6 +14,18 @@ public class FileService : IFileService
     {
         try
         {
+            // Check camera permission first
+            var cameraStatus = await Permissions.CheckStatusAsync<Permissions.Camera>();
+            if (cameraStatus != PermissionStatus.Granted)
+            {
+                cameraStatus = await Permissions.RequestAsync<Permissions.Camera>();
+            }
+
+            if (cameraStatus != PermissionStatus.Granted)
+            {
+                throw new PermissionException("Camera permission is required to capture photos.");
+            }
+
             var photo = await MediaPicker.Default.CapturePhotoAsync();
             if (photo == null)
                 return null;
@@ -23,7 +35,7 @@ public class FileService : IFileService
         catch (Exception ex)
         {
             Console.WriteLine($"Error capturing photo: {ex.Message}");
-            return null;
+            throw; // Re-throw to let caller handle permission denials
         }
     }
 
@@ -31,6 +43,18 @@ public class FileService : IFileService
     {
         try
         {
+            // Check photos permission first
+            var photosStatus = await Permissions.CheckStatusAsync<Permissions.Photos>();
+            if (photosStatus != PermissionStatus.Granted)
+            {
+                photosStatus = await Permissions.RequestAsync<Permissions.Photos>();
+            }
+
+            if (photosStatus != PermissionStatus.Granted)
+            {
+                throw new PermissionException("Photos access permission is required to select photos.");
+            }
+
             var photo = await MediaPicker.Default.PickPhotoAsync();
             if (photo == null)
                 return null;
@@ -40,7 +64,7 @@ public class FileService : IFileService
         catch (Exception ex)
         {
             Console.WriteLine($"Error picking photo: {ex.Message}");
-            return null;
+            throw; // Re-throw to let caller handle permission denials
         }
     }
 

@@ -53,6 +53,10 @@ public partial class CaptureViewModel : ObservableObject
                 StatusMessage = "Capture cancelled.";
             }
         }
+        catch (PermissionException ex)
+        {
+            StatusMessage = $"Permission denied: {ex.Message}";
+        }
         catch (Exception ex)
         {
             StatusMessage = $"Error: {ex.Message}";
@@ -77,6 +81,10 @@ public partial class CaptureViewModel : ObservableObject
                 StatusMessage = "Selection cancelled.";
             }
         }
+        catch (PermissionException ex)
+        {
+            StatusMessage = $"Permission denied: {ex.Message}";
+        }
         catch (Exception ex)
         {
             StatusMessage = $"Error: {ex.Message}";
@@ -95,18 +103,17 @@ public partial class CaptureViewModel : ObservableObject
         IsProcessing = true;
         StatusMessage = "Processing image...";
 
+        string? preprocessedPath = null;
+
         try
         {
             // Preprocess
             StatusMessage = "Preprocessing image...";
-            var preprocessedPath = await _preprocessService.PrepareForOcrAsync(CapturedImagePath);
+            preprocessedPath = await _preprocessService.PrepareForOcrAsync(CapturedImagePath);
 
             // OCR
             StatusMessage = "Running OCR...";
             var rawText = await _ocrService.RecognizeAsync(preprocessedPath);
-
-            // Cleanup temp file
-            await _fileService.DeleteFileAsync(preprocessedPath);
 
             if (string.IsNullOrWhiteSpace(rawText))
             {
@@ -131,6 +138,12 @@ public partial class CaptureViewModel : ObservableObject
         }
         finally
         {
+            // Cleanup temp file - ensure this happens even on error
+            if (preprocessedPath != null)
+            {
+                await _fileService.DeleteFileAsync(preprocessedPath);
+            }
+
             IsProcessing = false;
         }
     }

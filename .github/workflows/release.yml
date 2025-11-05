@@ -1,0 +1,196 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+        type: string
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  SOLUTION_PATH: 'ReceiptScannerLite.sln'
+  PROJECT_PATH: 'src/ReceiptScannerLite/ReceiptScannerLite.csproj'
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get version from tag
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        release_name: Receipt Scanner Lite v${{ steps.get_version.outputs.version }}
+        body: |
+          ## Receipt Scanner Lite v${{ steps.get_version.outputs.version }}
+
+          ### Downloads
+          - **Android**: Download the APK below for Android devices
+          - **Windows**: Download the MSIX package for Windows 10/11
+
+          ### Installation
+          - **Android**: Enable "Install from Unknown Sources" and install the APK
+          - **Windows**: Install the MSIX package (requires Windows 10 19041 or later)
+
+          ### What's New
+          See commit history for changes in this release.
+
+          ---
+          Built with ❤️ using .NET MAUI
+        draft: false
+        prerelease: false
+
+  build-android-release:
+    name: Build Android Release
+    runs-on: windows-latest
+    needs: create-release
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install .NET MAUI workload
+      run: dotnet workload install maui
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+    - name: Build Android APK (Release)
+      run: |
+        dotnet publish ${{ env.PROJECT_PATH }} `
+          -f net8.0-android `
+          -c Release `
+          /p:AndroidPackageFormat=apk `
+          /p:ApplicationVersion=${{ needs.create-release.outputs.version }} `
+          /p:ApplicationDisplayVersion=${{ needs.create-release.outputs.version }}
+
+    - name: Sign Android APK (if keystore configured)
+      run: |
+        # TODO: Add signing configuration when keystore is available
+        # For now, upload unsigned APK
+        Write-Host "Skipping APK signing - no keystore configured"
+      continue-on-error: true
+
+    - name: Find APK
+      id: find_apk
+      shell: pwsh
+      run: |
+        $apk = Get-ChildItem -Path . -Filter "*.apk" -Recurse | Select-Object -First 1
+        echo "apk_path=$($apk.FullName)" >> $env:GITHUB_OUTPUT
+        echo "apk_name=ReceiptScannerLite-v${{ needs.create-release.outputs.version }}-android.apk" >> $env:GITHUB_OUTPUT
+
+    - name: Upload APK to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ${{ steps.find_apk.outputs.apk_path }}
+        asset_name: ${{ steps.find_apk.outputs.apk_name }}
+        asset_content_type: application/vnd.android.package-archive
+
+  build-windows-release:
+    name: Build Windows Release
+    runs-on: windows-latest
+    needs: create-release
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install .NET MAUI workload
+      run: dotnet workload install maui
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+    - name: Build Windows MSIX (Release)
+      run: |
+        dotnet publish ${{ env.PROJECT_PATH }} `
+          -f net8.0-windows10.0.19041.0 `
+          -c Release `
+          -p:RuntimeIdentifierOverride=win10-x64 `
+          /p:ApplicationVersion=${{ needs.create-release.outputs.version }} `
+          /p:ApplicationDisplayVersion=${{ needs.create-release.outputs.version }}
+
+    - name: Find MSIX
+      id: find_msix
+      shell: pwsh
+      run: |
+        $msix = Get-ChildItem -Path . -Filter "*.msix" -Recurse | Select-Object -First 1
+        if ($msix) {
+          echo "msix_path=$($msix.FullName)" >> $env:GITHUB_OUTPUT
+          echo "msix_name=ReceiptScannerLite-v${{ needs.create-release.outputs.version }}-windows.msix" >> $env:GITHUB_OUTPUT
+          echo "found=true" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "found=false" >> $env:GITHUB_OUTPUT
+          Write-Host "No MSIX found, will create ZIP of publish folder"
+        }
+
+    - name: Create Windows ZIP if no MSIX
+      if: steps.find_msix.outputs.found == 'false'
+      shell: pwsh
+      run: |
+        $publishDir = Get-ChildItem -Path . -Filter "publish" -Directory -Recurse | Select-Object -First 1
+        if ($publishDir) {
+          $zipPath = "ReceiptScannerLite-v${{ needs.create-release.outputs.version }}-windows.zip"
+          Compress-Archive -Path "$($publishDir.FullName)\*" -DestinationPath $zipPath
+          echo "zip_path=$zipPath" >> $env:GITHUB_OUTPUT
+          echo "zip_name=ReceiptScannerLite-v${{ needs.create-release.outputs.version }}-windows.zip" >> $env:GITHUB_OUTPUT
+        }
+
+    - name: Upload Windows MSIX to Release
+      if: steps.find_msix.outputs.found == 'true'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ${{ steps.find_msix.outputs.msix_path }}
+        asset_name: ${{ steps.find_msix.outputs.msix_name }}
+        asset_content_type: application/octet-stream
+
+    - name: Upload Windows ZIP to Release
+      if: steps.find_msix.outputs.found == 'false'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ${{ steps.find_msix.outputs.zip_path }}
+        asset_name: ${{ steps.find_msix.outputs.zip_name }}
+        asset_content_type: application/zip

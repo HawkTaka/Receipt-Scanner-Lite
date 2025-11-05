@@ -1,0 +1,48 @@
+version: 2
+updates:
+  # NuGet package updates for .NET dependencies
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "HawkTaka"
+    labels:
+      - "dependencies"
+      - "nuget"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    groups:
+      # Group Microsoft packages together
+      microsoft:
+        patterns:
+          - "Microsoft.*"
+      # Group CommunityToolkit packages together
+      communitytoolkit:
+        patterns:
+          - "CommunityToolkit.*"
+      # Group testing packages together
+      testing:
+        patterns:
+          - "*.Test*"
+          - "xunit*"
+          - "Moq"
+          - "FluentAssertions"
+
+  # GitHub Actions updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"

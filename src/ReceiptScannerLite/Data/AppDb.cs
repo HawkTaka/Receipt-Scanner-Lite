@@ -1,26 +1,29 @@
+using Microsoft.Extensions.Logging;
+using ReceiptScannerLite.Data.Migrations;
 using SQLite;
-using ReceiptScannerLite.Data.Models;
 
 namespace ReceiptScannerLite.Data;
 
 public class AppDb
 {
     private readonly SQLiteAsyncConnection _connection;
+    private readonly ILogger<DatabaseMigrationService> _migrationLogger;
+    private DatabaseMigrationService? _migrationService;
 
-    public AppDb(string dbPath)
+    public AppDb(string dbPath, ILogger<DatabaseMigrationService> migrationLogger)
     {
         _connection = new SQLiteAsyncConnection(dbPath);
+        _migrationLogger = migrationLogger;
     }
 
     public async Task InitializeAsync()
     {
-        await _connection.CreateTableAsync<Receipt>();
-        await _connection.CreateTableAsync<LineItem>();
-
-        // Create indices
-        await _connection.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_receipt_date ON Receipt(Date)");
-        await _connection.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_receipt_category ON Receipt(Category)");
+        // Use migration service to handle schema initialization and upgrades
+        _migrationService = new DatabaseMigrationService(_connection, _migrationLogger);
+        await _migrationService.InitializeAsync();
     }
 
     public SQLiteAsyncConnection Connection => _connection;
+
+    public DatabaseMigrationService? MigrationService => _migrationService;
 }

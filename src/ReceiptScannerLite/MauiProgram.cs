@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using ReceiptScannerLite.Data;
+using ReceiptScannerLite.Data.Migrations;
 using ReceiptScannerLite.Data.Repositories;
 using ReceiptScannerLite.Services;
 using ReceiptScannerLite.ViewModels;
@@ -27,7 +28,11 @@ public static class MauiProgram
 
         // Database
         var dbPath = Path.Combine(FileSystem.AppDataDirectory, "receipts.db");
-        builder.Services.AddSingleton(sp => new AppDb(dbPath));
+        builder.Services.AddSingleton(sp =>
+        {
+            var migrationLogger = sp.GetRequiredService<ILogger<DatabaseMigrationService>>();
+            return new AppDb(dbPath, migrationLogger);
+        });
 
         // Repositories
         builder.Services.AddSingleton<IReceiptRepository, ReceiptRepository>();

@@ -1,0 +1,63 @@
+// This is a template for future migrations. Copy and modify as needed.
+// Remove the .template extension when creating an actual migration.
+
+using SQLite;
+
+namespace ReceiptScannerLite.Data.Migrations;
+
+/// <summary>
+/// Migration 002: Example migration template
+///
+/// Example: Add a new column to Receipt table
+/// </summary>
+public class Migration_002_Example : IDatabaseMigration
+{
+    public int Version => 2;
+
+    public string Description => "Example: Add PaymentMethod column to Receipt table";
+
+    public async Task UpAsync(SQLiteAsyncConnection connection)
+    {
+        // Example: Add a new column
+        await connection.ExecuteAsync(
+            "ALTER TABLE Receipt ADD COLUMN PaymentMethod TEXT");
+
+        // Example: Create a new table
+        // await connection.CreateTableAsync<NewTableModel>();
+
+        // Example: Create an index
+        // await connection.ExecuteAsync(
+        //     "CREATE INDEX IF NOT EXISTS idx_receipt_payment ON Receipt(PaymentMethod)");
+
+        // Example: Migrate existing data
+        // await connection.ExecuteAsync(
+        //     "UPDATE Receipt SET PaymentMethod = 'Unknown' WHERE PaymentMethod IS NULL");
+    }
+
+    public async Task DownAsync(SQLiteAsyncConnection connection)
+    {
+        // SQLite doesn't support DROP COLUMN directly, so we need to:
+        // 1. Create a new table without the column
+        // 2. Copy data from old table
+        // 3. Drop old table
+        // 4. Rename new table
+
+        // For simplicity, most downgrades can throw NotSupportedException
+        throw new NotSupportedException("Downgrade from version 2 is not supported");
+
+        // Or implement full downgrade:
+        /*
+        await connection.ExecuteAsync(@"
+            CREATE TABLE Receipt_backup AS
+            SELECT Id, StoreName, Date, Subtotal, Tax, Total, Category, Notes, ImagePath, RawText, CreatedUtc, UpdatedUtc
+            FROM Receipt");
+
+        await connection.ExecuteAsync("DROP TABLE Receipt");
+        await connection.ExecuteAsync("ALTER TABLE Receipt_backup RENAME TO Receipt");
+
+        // Recreate indices
+        await connection.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_receipt_date ON Receipt(Date)");
+        await connection.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_receipt_category ON Receipt(Category)");
+        */
+    }
+}

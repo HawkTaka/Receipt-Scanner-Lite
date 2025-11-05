@@ -53,6 +53,11 @@ public class NavigationService : INavigationService
         NavigateTo($"/receipt-detail/{receiptId}");
     }
 
+    public void NavigateToEditReceipt(int receiptId)
+    {
+        NavigateTo($"/edit-receipt/{receiptId}");
+    }
+
     public void NavigateBack()
     {
         if (_navigationManager == null)

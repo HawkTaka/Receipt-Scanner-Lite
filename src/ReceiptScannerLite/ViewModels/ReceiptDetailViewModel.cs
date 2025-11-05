@@ -116,6 +116,15 @@ public partial class ReceiptDetailViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void EditReceipt()
+    {
+        if (Receipt == null)
+            return;
+
+        _navigationService.NavigateToEditReceipt(Receipt.Id);
+    }
+
+    [RelayCommand]
     private async Task DeleteAsync()
     {
         if (Receipt == null)

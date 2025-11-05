@@ -23,6 +23,12 @@ public interface INavigationService
     void NavigateToReceipt(int receiptId);
 
     /// <summary>
+    /// Navigates to the edit receipt page.
+    /// </summary>
+    /// <param name="receiptId">ID of the receipt to edit</param>
+    void NavigateToEditReceipt(int receiptId);
+
+    /// <summary>
     /// Navigates back to the previous page.
     /// </summary>
     void NavigateBack();

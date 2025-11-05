@@ -1,0 +1,248 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using ReceiptScannerLite.Data.Models;
+using ReceiptScannerLite.Data.Repositories;
+using ReceiptScannerLite.Services;
+using System.Collections.ObjectModel;
+
+namespace ReceiptScannerLite.ViewModels;
+
+public partial class EditReceiptViewModel : ObservableObject
+{
+    private readonly IReceiptRepository _receiptRepository;
+    private readonly ILineItemRepository _lineItemRepository;
+    private readonly INavigationService _navigationService;
+    private readonly IReceiptValidationService _validationService;
+    private readonly ICategoryService _categoryService;
+
+    private int _receiptId;
+
+    [ObservableProperty]
+    private string? _storeName;
+
+    [ObservableProperty]
+    private DateTime _date = DateTime.Today;
+
+    [ObservableProperty]
+    private decimal? _subtotal;
+
+    [ObservableProperty]
+    private decimal? _tax;
+
+    [ObservableProperty]
+    private decimal? _total;
+
+    [ObservableProperty]
+    private string _category;
+
+    [ObservableProperty]
+    private string? _notes;
+
+    [ObservableProperty]
+    private string _imagePath = "";
+
+    [ObservableProperty]
+    private string _rawText = "";
+
+    [ObservableProperty]
+    private bool _isSaving;
+
+    [ObservableProperty]
+    private bool _isLoading;
+
+    [ObservableProperty]
+    private string? _statusMessage;
+
+    public ObservableCollection<LineItemEdit> LineItems { get; } = new();
+
+    public IReadOnlyList<string> Categories { get; }
+
+    public EditReceiptViewModel(
+        IReceiptRepository receiptRepository,
+        ILineItemRepository lineItemRepository,
+        INavigationService navigationService,
+        IReceiptValidationService validationService,
+        ICategoryService categoryService)
+    {
+        _receiptRepository = receiptRepository;
+        _lineItemRepository = lineItemRepository;
+        _navigationService = navigationService;
+        _validationService = validationService;
+        _categoryService = categoryService;
+
+        Categories = _categoryService.GetAllCategories();
+        _category = _categoryService.GetDefaultCategory();
+    }
+
+    public async Task LoadReceiptAsync(int receiptId)
+    {
+        IsLoading = true;
+        _receiptId = receiptId;
+
+        try
+        {
+            var receipt = await _receiptRepository.GetAsync(receiptId);
+            if (receipt == null)
+            {
+                StatusMessage = "Receipt not found";
+                return;
+            }
+
+            // Load receipt data
+            StoreName = receipt.StoreName;
+            Date = receipt.Date;
+            Subtotal = receipt.Subtotal;
+            Tax = receipt.Tax;
+            Total = receipt.Total;
+            Category = receipt.Category;
+            Notes = receipt.Notes;
+            ImagePath = receipt.ImagePath;
+            RawText = receipt.RawText;
+
+            // Load line items
+            var items = await _lineItemRepository.GetByReceiptAsync(receiptId);
+            LineItems.Clear();
+            foreach (var item in items)
+            {
+                LineItems.Add(new LineItemEdit
+                {
+                    Description = item.Description,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    LineTotal = item.LineTotal
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading receipt: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private void AddLineItem()
+    {
+        LineItems.Add(new LineItemEdit
+        {
+            Description = "New Item",
+            LineTotal = 0
+        });
+    }
+
+    [RelayCommand]
+    private void RemoveLineItem(LineItemEdit item)
+    {
+        LineItems.Remove(item);
+    }
+
+    [RelayCommand]
+    private async Task SaveAsync()
+    {
+        if (!Total.HasValue || Total.Value <= 0)
+        {
+            StatusMessage = "Please enter a valid total amount.";
+            return;
+        }
+
+        IsSaving = true;
+        StatusMessage = "Validating receipt...";
+
+        try
+        {
+            // Create receipt with updated data
+            var receipt = new Receipt
+            {
+                Id = _receiptId,
+                StoreName = StoreName,
+                Date = Date,
+                Subtotal = Subtotal,
+                Tax = Tax,
+                Total = Total.Value,
+                Category = Category,
+                Notes = Notes,
+                ImagePath = ImagePath,
+                RawText = RawText
+            };
+
+            // Validate receipt before saving
+            var validationResult = _validationService.Validate(receipt);
+            if (!validationResult.IsValid)
+            {
+                StatusMessage = $"Validation failed:\n{string.Join("\n", validationResult.Errors)}";
+                return;
+            }
+
+            StatusMessage = "Saving receipt...";
+            await _receiptRepository.UpdateAsync(receipt);
+
+            // Save line items
+            var items = LineItems.Select((item, index) => new LineItem
+            {
+                ReceiptId = _receiptId,
+                Description = item.Description ?? "",
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                LineTotal = item.LineTotal,
+                Position = index
+            }).ToList();
+
+            await _lineItemRepository.BulkUpsertAsync(_receiptId, items);
+
+            StatusMessage = "Receipt saved successfully!";
+
+            // Navigate back to detail page
+            await Task.Delay(500);
+            _navigationService.NavigateToReceipt(_receiptId);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error saving: {ex.Message}";
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        _navigationService.NavigateBack();
+    }
+}
+
+public class LineItemEdit : ObservableObject
+{
+    private string? _description;
+    private decimal? _quantity;
+    private decimal? _unitPrice;
+    private decimal? _lineTotal;
+
+    public string? Description
+    {
+        get => _description;
+        set => SetProperty(ref _description, value);
+    }
+
+    public decimal? Quantity
+    {
+        get => _quantity;
+        set => SetProperty(ref _quantity, value);
+    }
+
+    public decimal? UnitPrice
+    {
+        get => _unitPrice;
+        set => SetProperty(ref _unitPrice, value);
+    }
+
+    public decimal? LineTotal
+    {
+        get => _lineTotal;
+        set => SetProperty(ref _lineTotal, value);
+    }
+}

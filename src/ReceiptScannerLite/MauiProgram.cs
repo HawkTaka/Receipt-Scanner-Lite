@@ -56,6 +56,7 @@ public static class MauiProgram
         // ViewModels
         builder.Services.AddTransient<CaptureViewModel>();
         builder.Services.AddTransient<ReviewViewModel>();
+        builder.Services.AddTransient<EditReceiptViewModel>();
         builder.Services.AddTransient<ReceiptsViewModel>();
         builder.Services.AddTransient<ReceiptDetailViewModel>();
         builder.Services.AddTransient<InsightsViewModel>();

@@ -11,6 +11,7 @@ public partial class ReceiptsViewModel : ObservableObject
 {
     private readonly IReceiptRepository _receiptRepository;
     private readonly INavigationService _navigationService;
+    private CancellationTokenSource? _searchDebounceTokenSource;
 
     [ObservableProperty]
     private ObservableCollection<Receipt> _receipts = new();
@@ -121,8 +122,31 @@ public partial class ReceiptsViewModel : ObservableObject
 
     partial void OnSearchTextChanged(string? value)
     {
-        // Auto-refresh when search text changes (with debounce in real app)
-        _ = RefreshCommand.ExecuteAsync(null);
+        // Cancel any pending search
+        _searchDebounceTokenSource?.Cancel();
+        _searchDebounceTokenSource?.Dispose();
+        _searchDebounceTokenSource = new CancellationTokenSource();
+
+        var token = _searchDebounceTokenSource.Token;
+
+        // Debounce search - wait 400ms before executing
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(400, token);
+
+                // If not cancelled, execute the search
+                if (!token.IsCancellationRequested)
+                {
+                    await RefreshCommand.ExecuteAsync(null);
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Expected when user types again - do nothing
+            }
+        }, token);
     }
 
     partial void OnSelectedCategoryChanged(string? value)

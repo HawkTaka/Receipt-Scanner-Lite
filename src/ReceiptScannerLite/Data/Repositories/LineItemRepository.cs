@@ -13,18 +13,25 @@ public class LineItemRepository : ILineItemRepository
 
     public async Task BulkUpsertAsync(int receiptId, IEnumerable<LineItem> items)
     {
-        // Delete existing items for this receipt
-        await DeleteForReceiptAsync(receiptId);
-
-        // Insert new items
-        var itemsList = items.ToList();
-        for (int i = 0; i < itemsList.Count; i++)
+        await _db.Connection.RunInTransactionAsync((connection) =>
         {
-            var item = itemsList[i];
-            item.ReceiptId = receiptId;
-            item.Position = i;
-            await _db.Connection.InsertAsync(item);
-        }
+            // Delete existing items for this receipt
+            connection.Execute("DELETE FROM LineItem WHERE ReceiptId = ?", receiptId);
+
+            // Prepare new items with ReceiptId and Position
+            var itemsList = items.ToList();
+            for (int i = 0; i < itemsList.Count; i++)
+            {
+                itemsList[i].ReceiptId = receiptId;
+                itemsList[i].Position = i;
+            }
+
+            // Insert all items in a single batch operation
+            if (itemsList.Count > 0)
+            {
+                connection.InsertAll(itemsList);
+            }
+        });
     }
 
     public async Task<IReadOnlyList<LineItem>> GetByReceiptAsync(int receiptId)

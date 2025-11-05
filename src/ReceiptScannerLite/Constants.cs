@@ -82,4 +82,30 @@ public static class Constants
         /// </summary>
         public const string LineItemsFileName = "line_items.csv";
     }
+
+    /// <summary>
+    /// Timing-related constants
+    /// </summary>
+    public static class Timing
+    {
+        /// <summary>
+        /// Debounce delay for search input in milliseconds
+        /// </summary>
+        public const int SearchDebounceMilliseconds = 400;
+
+        /// <summary>
+        /// Cache expiration time for insights in minutes
+        /// </summary>
+        public const int InsightsCacheMinutes = 5;
+
+        /// <summary>
+        /// Page size for receipt pagination
+        /// </summary>
+        public const int ReceiptsPageSize = 50;
+
+        /// <summary>
+        /// Maximum navigation stack size
+        /// </summary>
+        public const int MaxNavigationStackSize = 10;
+    }
 }

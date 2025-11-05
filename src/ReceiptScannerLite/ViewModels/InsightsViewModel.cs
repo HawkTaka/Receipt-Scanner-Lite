@@ -11,7 +11,7 @@ public partial class InsightsViewModel : ObservableObject
     private readonly IReceiptRepository _receiptRepository;
     private readonly ILogger<InsightsViewModel> _logger;
     private DateTime? _lastCacheTime;
-    private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(Constants.Timing.InsightsCacheMinutes);
 
     [ObservableProperty]
     private ObservableCollection<MonthlyTotal> _monthlyTotals = new();

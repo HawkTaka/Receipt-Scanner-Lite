@@ -19,23 +19,31 @@ public class ReceiptRepository : IReceiptRepository
 
     public async Task<int> InsertAsync(Receipt receipt)
     {
+        _logger.LogDebug("Inserting receipt for {StoreName} dated {Date}", receipt.StoreName, receipt.Date);
         receipt.CreatedUtc = DateTime.UtcNow;
         receipt.UpdatedUtc = DateTime.UtcNow;
-        return await _db.Connection.InsertAsync(receipt);
+        var id = await _db.Connection.InsertAsync(receipt);
+        _logger.LogInformation("Inserted receipt {ReceiptId} for {StoreName}", id, receipt.StoreName);
+        return id;
     }
 
     public async Task UpdateAsync(Receipt receipt)
     {
+        _logger.LogDebug("Updating receipt {ReceiptId}", receipt.Id);
         receipt.UpdatedUtc = DateTime.UtcNow;
         await _db.Connection.UpdateAsync(receipt);
+        _logger.LogInformation("Updated receipt {ReceiptId} for {StoreName}", receipt.Id, receipt.StoreName);
     }
 
     public async Task DeleteAsync(int id)
     {
+        _logger.LogDebug("Deleting receipt {ReceiptId}", id);
+
         // Load receipt to get image path and ensure it exists
         var receipt = await GetAsync(id);
         if (receipt == null)
         {
+            _logger.LogWarning("Receipt {ReceiptId} not found for deletion", id);
             return; // Receipt doesn't exist, nothing to delete
         }
 
@@ -58,6 +66,7 @@ public class ReceiptRepository : IReceiptRepository
 
         // Finally, delete the receipt record
         await _db.Connection.DeleteAsync<Receipt>(id);
+        _logger.LogInformation("Deleted receipt {ReceiptId} for {StoreName}", id, receipt.StoreName);
     }
 
     public async Task<Receipt?> GetAsync(int id)

@@ -43,7 +43,6 @@ public partial class ReceiptsViewModel : ObservableObject, IDisposable
     private bool _isLoadingMore;
 
     private int _currentPage = 0;
-    private const int PageSize = 50; // Load 50 receipts at a time
 
     public IReadOnlyList<string> Categories { get; }
 
@@ -91,8 +90,8 @@ public partial class ReceiptsViewModel : ObservableObject, IDisposable
                 category: category,
                 storeLike: SearchText);
 
-            // For first page, take PageSize items
-            var pagedReceipts = receipts.Take(PageSize).ToList();
+            // For first page, take Constants.Timing.ReceiptsPageSize items
+            var pagedReceipts = receipts.Take(Constants.Timing.ReceiptsConstants.Timing.ReceiptsPageSize).ToList();
 
             Receipts.Clear();
             foreach (var receipt in pagedReceipts)
@@ -101,7 +100,7 @@ public partial class ReceiptsViewModel : ObservableObject, IDisposable
             }
 
             // Check if there are more receipts to load
-            HasMoreReceipts = receipts.Count() > PageSize;
+            HasMoreReceipts = receipts.Count() > Constants.Timing.ReceiptsPageSize;
         }
         catch (Exception ex)
         {
@@ -136,7 +135,7 @@ public partial class ReceiptsViewModel : ObservableObject, IDisposable
                 storeLike: SearchText);
 
             // Skip already loaded pages and take next page
-            var pagedReceipts = receipts.Skip(_currentPage * PageSize).Take(PageSize).ToList();
+            var pagedReceipts = receipts.Skip(_currentPage * Constants.Timing.ReceiptsPageSize).Take(Constants.Timing.ReceiptsPageSize).ToList();
 
             foreach (var receipt in pagedReceipts)
             {
@@ -144,7 +143,7 @@ public partial class ReceiptsViewModel : ObservableObject, IDisposable
             }
 
             // Check if there are more receipts to load
-            HasMoreReceipts = receipts.Count() > (_currentPage + 1) * PageSize;
+            HasMoreReceipts = receipts.Count() > (_currentPage + 1) * Constants.Timing.ReceiptsPageSize;
         }
         catch (Exception ex)
         {
@@ -274,7 +273,7 @@ public partial class ReceiptsViewModel : ObservableObject, IDisposable
         {
             try
             {
-                await Task.Delay(400, token);
+                await Task.Delay(Constants.Timing.SearchDebounceMilliseconds, token);
 
                 // If not cancelled, execute the search
                 if (!token.IsCancellationRequested)

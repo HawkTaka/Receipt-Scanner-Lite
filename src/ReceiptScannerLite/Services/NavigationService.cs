@@ -9,7 +9,6 @@ public class NavigationService : INavigationService
     private readonly ILogger<NavigationService> _logger;
     private readonly IReviewStateService _reviewStateService;
     private readonly Stack<string> _navigationStack = new Stack<string>();
-    private const int MaxStackSize = 10; // Prevent unbounded growth
 
     public NavigationService(ILogger<NavigationService> logger, IReviewStateService reviewStateService)
     {
@@ -41,12 +40,12 @@ public class NavigationService : INavigationService
                 _navigationStack.Push(currentUri);
 
                 // Limit stack size to prevent memory issues
-                if (_navigationStack.Count > MaxStackSize)
+                if (_navigationStack.Count > Constants.Timing.MaxNavigationStackSize)
                 {
                     // Remove oldest entry (at bottom of stack)
                     var temp = _navigationStack.ToArray();
                     _navigationStack.Clear();
-                    for (int i = 0; i < MaxStackSize; i++)
+                    for (int i = 0; i < Constants.Timing.MaxNavigationStackSize; i++)
                     {
                         _navigationStack.Push(temp[i]);
                     }

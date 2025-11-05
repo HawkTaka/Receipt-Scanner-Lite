@@ -8,7 +8,7 @@ using System.Collections.ObjectModel;
 
 namespace ReceiptScannerLite.ViewModels;
 
-public partial class ReceiptsViewModel : ObservableObject
+public partial class ReceiptsViewModel : ObservableObject, IDisposable
 {
     private readonly IReceiptRepository _receiptRepository;
     private readonly INavigationService _navigationService;
@@ -36,6 +36,15 @@ public partial class ReceiptsViewModel : ObservableObject
     [ObservableProperty]
     private DateTime? _toDate;
 
+    [ObservableProperty]
+    private bool _hasMoreReceipts;
+
+    [ObservableProperty]
+    private bool _isLoadingMore;
+
+    private int _currentPage = 0;
+    private const int PageSize = 50; // Load 50 receipts at a time
+
     public IReadOnlyList<string> Categories { get; }
 
     public ReceiptsViewModel(
@@ -54,7 +63,7 @@ public partial class ReceiptsViewModel : ObservableObject
         _errorMessageService = errorMessageService;
 
         // Add "All" to the beginning of the category list for filtering
-        var allCategories = new List<string> { "All" };
+        var allCategories = new List<string> { Constants.UI.AllCategories };
         allCategories.AddRange(_categoryService.GetAllCategories());
         Categories = allCategories.AsReadOnly();
     }
@@ -68,10 +77,11 @@ public partial class ReceiptsViewModel : ObservableObject
     private async Task RefreshAsync()
     {
         IsLoading = true;
+        _currentPage = 0;
 
         try
         {
-            var category = SelectedCategory == "All" || string.IsNullOrWhiteSpace(SelectedCategory)
+            var category = SelectedCategory == Constants.UI.AllCategories || string.IsNullOrWhiteSpace(SelectedCategory)
                 ? null
                 : SelectedCategory;
 
@@ -81,11 +91,17 @@ public partial class ReceiptsViewModel : ObservableObject
                 category: category,
                 storeLike: SearchText);
 
+            // For first page, take PageSize items
+            var pagedReceipts = receipts.Take(PageSize).ToList();
+
             Receipts.Clear();
-            foreach (var receipt in receipts)
+            foreach (var receipt in pagedReceipts)
             {
                 Receipts.Add(receipt);
             }
+
+            // Check if there are more receipts to load
+            HasMoreReceipts = receipts.Count() > PageSize;
         }
         catch (Exception ex)
         {
@@ -94,6 +110,49 @@ public partial class ReceiptsViewModel : ObservableObject
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoadMoreAsync()
+    {
+        if (IsLoadingMore || !HasMoreReceipts)
+            return;
+
+        IsLoadingMore = true;
+
+        try
+        {
+            _currentPage++;
+
+            var category = SelectedCategory == Constants.UI.AllCategories || string.IsNullOrWhiteSpace(SelectedCategory)
+                ? null
+                : SelectedCategory;
+
+            var receipts = await _receiptRepository.QueryAsync(
+                from: FromDate,
+                to: ToDate,
+                category: category,
+                storeLike: SearchText);
+
+            // Skip already loaded pages and take next page
+            var pagedReceipts = receipts.Skip(_currentPage * PageSize).Take(PageSize).ToList();
+
+            foreach (var receipt in pagedReceipts)
+            {
+                Receipts.Add(receipt);
+            }
+
+            // Check if there are more receipts to load
+            HasMoreReceipts = receipts.Count() > (_currentPage + 1) * PageSize;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading more receipts");
+        }
+        finally
+        {
+            IsLoadingMore = false;
         }
     }
 
@@ -278,5 +337,13 @@ public partial class ReceiptsViewModel : ObservableObject
                 _logger.LogError(ex, "Error refreshing receipts after to date change");
             }
         });
+    }
+
+    public void Dispose()
+    {
+        // Cancel any pending search operations
+        _searchDebounceTokenSource?.Cancel();
+        _searchDebounceTokenSource?.Dispose();
+        _searchDebounceTokenSource = null;
     }
 }

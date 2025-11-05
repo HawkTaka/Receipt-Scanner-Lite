@@ -19,7 +19,7 @@ public class BootstrapService : IBootstrapService
         try
         {
             // Create app directories
-            var receiptsDir = Path.Combine(FileSystem.Current.AppDataDirectory, "receipts");
+            var receiptsDir = Path.Combine(FileSystem.Current.AppDataDirectory, Constants.Directories.Receipts);
             var tessdataDir = Path.Combine(FileSystem.Current.AppDataDirectory, "tessdata");
             var tempDir = Path.Combine(FileSystem.Current.CacheDirectory);
 

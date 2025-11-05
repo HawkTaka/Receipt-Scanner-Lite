@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using ReceiptScannerLite.Data.Repositories;
 using ReceiptScannerLite.Services;
 
@@ -11,6 +12,7 @@ public partial class ExportViewModel : ObservableObject
     private readonly ILineItemRepository _lineItemRepository;
     private readonly ICsvExportService _csvExportService;
     private readonly IErrorMessageService _errorMessageService;
+    private readonly ILogger<ExportViewModel> _logger;
 
     [ObservableProperty]
     private DateTime? _fromDate;
@@ -34,12 +36,14 @@ public partial class ExportViewModel : ObservableObject
         IReceiptRepository receiptRepository,
         ILineItemRepository lineItemRepository,
         ICsvExportService csvExportService,
-        IErrorMessageService errorMessageService)
+        IErrorMessageService errorMessageService,
+        ILogger<ExportViewModel> logger)
     {
         _receiptRepository = receiptRepository;
         _lineItemRepository = lineItemRepository;
         _csvExportService = csvExportService;
         _errorMessageService = errorMessageService;
+        _logger = logger;
     }
 
     public async Task LoadStatsAsync()
@@ -212,11 +216,31 @@ public partial class ExportViewModel : ObservableObject
 
     partial void OnFromDateChanged(DateTime? value)
     {
-        _ = UpdateStatsCommand.ExecuteAsync(null);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await UpdateStatsCommand.ExecuteAsync(null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating stats after from date change");
+            }
+        });
     }
 
     partial void OnToDateChanged(DateTime? value)
     {
-        _ = UpdateStatsCommand.ExecuteAsync(null);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await UpdateStatsCommand.ExecuteAsync(null);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating stats after to date change");
+            }
+        });
     }
 }

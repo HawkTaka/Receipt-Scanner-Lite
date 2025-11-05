@@ -84,7 +84,7 @@ public class ReceiptValidationService : IReceiptValidationService
         if (!string.IsNullOrWhiteSpace(receipt.ImagePath))
         {
             // Security: Validate path is within the receipts directory (prevent path traversal)
-            var receiptsDir = Path.Combine(FileSystem.Current.AppDataDirectory, "receipts");
+            var receiptsDir = Path.Combine(FileSystem.Current.AppDataDirectory, Constants.Directories.Receipts);
             var fullImagePath = Path.GetFullPath(receipt.ImagePath);
             var fullReceiptsDir = Path.GetFullPath(receiptsDir);
 

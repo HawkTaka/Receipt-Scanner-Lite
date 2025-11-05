@@ -9,7 +9,7 @@ public class ImagePreprocessService : IImagePreprocessService
 
     public async Task<string> PrepareForOcrAsync(string inputImagePath, CancellationToken cancellationToken = default)
     {
-        return await Task.Run(() =>
+        return await Task.Run(async () =>
         {
             SKBitmap? scaled = null;
             SKBitmap? grayscale = null;
@@ -22,9 +22,13 @@ public class ImagePreprocessService : IImagePreprocessService
                 // Check for cancellation before starting
                 cancellationToken.ThrowIfCancellationRequested();
 
-                // Load the image
-                using var inputStream = File.OpenRead(inputImagePath);
-                using var original = SKBitmap.Decode(inputStream);
+                // Load the image asynchronously
+                using var inputStream = new FileStream(inputImagePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
+                var imageData = new byte[inputStream.Length];
+                await inputStream.ReadAsync(imageData, 0, (int)inputStream.Length, cancellationToken).ConfigureAwait(false);
+
+                using var ms = new MemoryStream(imageData);
+                using var original = SKBitmap.Decode(ms);
 
                 if (original == null)
                 {
@@ -47,14 +51,19 @@ public class ImagePreprocessService : IImagePreprocessService
                 cancellationToken.ThrowIfCancellationRequested();
                 binarized = ApplyAdaptiveThreshold(contrasted);
 
-                // Step 5: Save to temp PNG
+                // Step 5: Save to temp PNG asynchronously
                 cancellationToken.ThrowIfCancellationRequested();
                 tempPath = Path.Combine(
                     FileSystem.Current.CacheDirectory,
                     $"ocr_temp_{Guid.NewGuid()}.png");
 
-                using var outputStream = File.OpenWrite(tempPath);
-                binarized.Encode(outputStream, SKEncodedImageFormat.Png, 100);
+                // Encode to memory first, then write asynchronously
+                using var outputMs = new MemoryStream();
+                binarized.Encode(outputMs, SKEncodedImageFormat.Png, 100);
+                outputMs.Position = 0;
+
+                using var outputStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
+                await outputMs.CopyToAsync(outputStream, 4096, cancellationToken).ConfigureAwait(false);
 
                 return tempPath;
             }

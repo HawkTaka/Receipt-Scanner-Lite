@@ -10,7 +10,7 @@ public class FileService : IFileService
     public FileService(ILogger<FileService> logger)
     {
         _logger = logger;
-        _receiptsDirectory = Path.Combine(FileSystem.Current.AppDataDirectory, "receipts");
+        _receiptsDirectory = Path.Combine(FileSystem.Current.AppDataDirectory, Constants.Directories.Receipts);
         Directory.CreateDirectory(_receiptsDirectory);
         _logger.LogDebug("FileService initialized with receipts directory: {Directory}", _receiptsDirectory);
     }

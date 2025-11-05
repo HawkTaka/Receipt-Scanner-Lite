@@ -10,6 +10,8 @@ public partial class InsightsViewModel : ObservableObject
 {
     private readonly IReceiptRepository _receiptRepository;
     private readonly ILogger<InsightsViewModel> _logger;
+    private DateTime? _lastCacheTime;
+    private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(5);
 
     [ObservableProperty]
     private ObservableCollection<MonthlyTotal> _monthlyTotals = new();
@@ -32,6 +34,15 @@ public partial class InsightsViewModel : ObservableObject
         _logger = logger;
     }
 
+    /// <summary>
+    /// Invalidates the cache, forcing a fresh load on next refresh
+    /// </summary>
+    public void InvalidateCache()
+    {
+        _lastCacheTime = null;
+        _logger.LogDebug("Insights cache invalidated");
+    }
+
     public async Task LoadInsightsAsync()
     {
         await RefreshCommand.ExecuteAsync(null);
@@ -40,6 +51,15 @@ public partial class InsightsViewModel : ObservableObject
     [RelayCommand]
     private async Task RefreshAsync()
     {
+        // Check if cache is still valid
+        if (_lastCacheTime.HasValue &&
+            DateTime.Now - _lastCacheTime.Value < CacheExpiration &&
+            MonthlyTotals.Count > 0)
+        {
+            _logger.LogDebug("Using cached insights data");
+            return;
+        }
+
         IsLoading = true;
 
         try
@@ -98,6 +118,10 @@ public partial class InsightsViewModel : ObservableObject
             // Overall stats
             GrandTotal = allReceipts.Sum(r => r.Total);
             ReceiptCount = allReceipts.Count;
+
+            // Update cache time after successful load
+            _lastCacheTime = DateTime.Now;
+            _logger.LogDebug("Insights data cached at {CacheTime}", _lastCacheTime);
         }
         catch (Exception ex)
         {

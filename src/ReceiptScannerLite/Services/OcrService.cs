@@ -5,6 +5,7 @@ namespace ReceiptScannerLite.Services;
 public class OcrService : IOcrService, IDisposable
 {
     private readonly TesseractEngine? _engine;
+    private readonly SemaphoreSlim _engineLock = new SemaphoreSlim(1, 1);
     private bool _disposed;
 
     public OcrService(string tessdataPath)
@@ -29,20 +30,30 @@ public class OcrService : IOcrService, IDisposable
             throw new InvalidOperationException("OCR engine is not initialized. Tesseract may not be properly configured.");
         }
 
-        return await Task.Run(() =>
+        // Use semaphore to ensure only one thread accesses the engine at a time
+        // TesseractEngine is not thread-safe
+        await _engineLock.WaitAsync();
+        try
         {
-            try
+            return await Task.Run(() =>
             {
-                using var img = Pix.LoadFromFile(imagePathPng);
-                using var page = _engine.Process(img, PageSegMode.Auto);
-                var text = page.GetText();
-                return text ?? string.Empty;
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"OCR recognition failed: {ex.Message}", ex);
-            }
-        });
+                try
+                {
+                    using var img = Pix.LoadFromFile(imagePathPng);
+                    using var page = _engine.Process(img, PageSegMode.Auto);
+                    var text = page.GetText();
+                    return text ?? string.Empty;
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"OCR recognition failed: {ex.Message}", ex);
+                }
+            });
+        }
+        finally
+        {
+            _engineLock.Release();
+        }
     }
 
     public void Dispose()
@@ -50,6 +61,7 @@ public class OcrService : IOcrService, IDisposable
         if (!_disposed)
         {
             _engine?.Dispose();
+            _engineLock?.Dispose();
             _disposed = true;
         }
     }

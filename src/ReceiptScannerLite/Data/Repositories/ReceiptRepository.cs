@@ -6,10 +6,12 @@ namespace ReceiptScannerLite.Data.Repositories;
 public class ReceiptRepository : IReceiptRepository
 {
     private readonly AppDb _db;
+    private readonly ILineItemRepository _lineItemRepository;
 
-    public ReceiptRepository(AppDb db)
+    public ReceiptRepository(AppDb db, ILineItemRepository lineItemRepository)
     {
         _db = db;
+        _lineItemRepository = lineItemRepository;
     }
 
     public async Task<int> InsertAsync(Receipt receipt)
@@ -27,6 +29,31 @@ public class ReceiptRepository : IReceiptRepository
 
     public async Task DeleteAsync(int id)
     {
+        // Load receipt to get image path and ensure it exists
+        var receipt = await GetAsync(id);
+        if (receipt == null)
+        {
+            return; // Receipt doesn't exist, nothing to delete
+        }
+
+        // Delete associated line items first (single SQL statement is more efficient)
+        await _lineItemRepository.DeleteForReceiptAsync(id);
+
+        // Delete image file from disk if it exists
+        if (!string.IsNullOrWhiteSpace(receipt.ImagePath) && File.Exists(receipt.ImagePath))
+        {
+            try
+            {
+                File.Delete(receipt.ImagePath);
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail the delete operation if image cleanup fails
+                Console.WriteLine($"Warning: Failed to delete image file {receipt.ImagePath}: {ex.Message}");
+            }
+        }
+
+        // Finally, delete the receipt record
         await _db.Connection.DeleteAsync<Receipt>(id);
     }
 

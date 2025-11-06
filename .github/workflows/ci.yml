@@ -42,7 +42,7 @@ jobs:
       continue-on-error: true  # Continue even if no tests exist yet
 
     - name: Publish test results
-      uses: dorny/test-reporter@v1
+      uses: dorny/test-reporter@v2
       if: always() && hashFiles('**/test-results.trx') != ''
       with:
         name: Test Results

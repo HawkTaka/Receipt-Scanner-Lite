@@ -61,7 +61,9 @@
         <AndroidAsset Include="Assets\tessdata\**" />
         <!-- Explicitly exclude Windows platform files when building for Android -->
         <Compile Remove="Platforms\Windows\**\*.cs" />
-        <None Include="Platforms\Windows\**\*.cs" />
+        <Compile Remove="Platforms\Windows\**\*.xaml.cs" />
+        <MauiXaml Remove="Platforms\Windows\**\*.xaml" />
+        <None Include="Platforms\Windows\**\*" />
     </ItemGroup>
 
     <!-- Windows specific -->
@@ -74,7 +76,7 @@
         </Content>
         <!-- Explicitly exclude Android platform files when building for Windows -->
         <Compile Remove="Platforms\Android\**\*.cs" />
-        <None Include="Platforms\Android\**\*.cs" />
+        <None Include="Platforms\Android\**\*" />
     </ItemGroup>
 
 </Project>

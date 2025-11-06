@@ -59,6 +59,9 @@
     <!-- Android specific -->
     <ItemGroup Condition="$(TargetFramework.StartsWith('net8.0-android'))">
         <AndroidAsset Include="Assets\tessdata\**" />
+        <!-- Explicitly exclude Windows platform files when building for Android -->
+        <Compile Remove="Platforms\Windows\**\*.cs" />
+        <None Include="Platforms\Windows\**\*.cs" />
     </ItemGroup>
 
     <!-- Windows specific -->
@@ -69,6 +72,9 @@
         <Content Include="Assets\tessdata\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+        <!-- Explicitly exclude Android platform files when building for Windows -->
+        <Compile Remove="Platforms\Android\**\*.cs" />
+        <None Include="Platforms\Android\**\*.cs" />
     </ItemGroup>
 
 </Project>

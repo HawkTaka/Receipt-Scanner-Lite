@@ -34,6 +34,9 @@ jobs:
         dotnet workload install maui --skip-sign-check
         dotnet workload list
 
+    - name: Clean previous builds
+      run: dotnet clean ${{ env.PROJECT_PATH }} -c Release
+
     - name: Restore dependencies
       run: dotnet restore ${{ env.PROJECT_PATH }}
 

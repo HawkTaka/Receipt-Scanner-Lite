@@ -63,9 +63,10 @@
 
     <!-- Windows specific -->
     <ItemGroup Condition="$(TargetFramework.StartsWith('net8.0-windows'))">
-        <Content Include="Assets\tessdata\**">
+        <!-- Use None Update instead of Content Include to avoid duplicates with SDK auto-inclusion -->
+        <None Update="Assets\tessdata\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
+        </None>
     </ItemGroup>
 
 </Project>

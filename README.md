@@ -5,6 +5,8 @@ A small, offline-first receipt scanner application built with .NET MAUI and Blaz
 ![.NET MAUI](https://img.shields.io/badge/.NET-MAUI-512BD4?style=flat-square)
 ![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows-green?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
+![CI Build](https://github.com/HawkTaka/Receipt-Scanner-Lite/workflows/CI%20Build%20and%20Test/badge.svg)
+![Release](https://github.com/HawkTaka/Receipt-Scanner-Lite/workflows/Release%20Build/badge.svg)
 
 ## Features
 
@@ -71,6 +73,30 @@ ReceiptScannerLite/
     ├── NumberNormalizationTests.cs
     └── DateParsingTests.cs
 ```
+
+## CI/CD & Automated Builds
+
+This project uses GitHub Actions for continuous integration and automated releases.
+
+### Build Status
+
+- **CI Pipeline**: Runs on every push and PR to validate code changes
+  - Builds for Android and Windows
+  - Runs all tests with coverage reporting
+  - Performs code quality checks
+
+- **Release Pipeline**: Creates versioned releases automatically
+  - Triggered by version tags (e.g., `v1.0.0`)
+  - Produces production Android APK and Windows MSIX
+  - Publishes to GitHub Releases
+
+### Download Latest Release
+
+Go to [Releases](https://github.com/HawkTaka/Receipt-Scanner-Lite/releases) to download:
+- **Android**: `ReceiptScannerLite-vX.X.X-android.apk`
+- **Windows**: `ReceiptScannerLite-vX.X.X-windows.msix`
+
+See [CI/CD Documentation](docs/CI-CD.md) for complete details on the build pipeline.
 
 ## Getting Started
 

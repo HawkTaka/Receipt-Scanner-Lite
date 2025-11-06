@@ -43,7 +43,7 @@ jobs:
 
     - name: Publish test results
       uses: dorny/test-reporter@v1
-      if: always()
+      if: always() && hashFiles('**/test-results.trx') != ''
       with:
         name: Test Results
         path: '**/test-results.trx'
@@ -74,16 +74,12 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Restore dependencies
-      run: dotnet restore ${{ env.SOLUTION_PATH }}
-
     - name: Format check
       run: dotnet format ${{ env.SOLUTION_PATH }} --verify-no-changes --verbosity diagnostic
       continue-on-error: true  # Don't fail build on format issues
 
-    - name: Analyze code
-      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release /p:TreatWarningsAsErrors=false /p:EnforceCodeStyleInBuild=true
-      continue-on-error: true
+    # Note: Skipping build-based analysis here since MAUI requires Windows
+    # Code analysis happens in the main build-and-test job
 
   build-android:
     name: Build Android

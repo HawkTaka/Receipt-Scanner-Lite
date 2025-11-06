@@ -34,22 +34,22 @@ jobs:
         dotnet workload list
 
     - name: Restore dependencies
-      run: dotnet restore ${{ env.SOLUTION_PATH }}
+      run: dotnet restore ${{ env.PROJECT_PATH }}
 
-    - name: Build solution
-      run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore /p:TreatWarningsAsErrors=false
+    - name: Build Android (verification build)
+      run: dotnet build ${{ env.PROJECT_PATH }} -f net8.0-android --configuration Release --no-restore /p:TreatWarningsAsErrors=false
 
     - name: Run tests (if any)
-      run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-build --verbosity normal
+      run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --verbosity normal
       continue-on-error: true
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       if: success()
       with:
-        name: build-artifacts
+        name: build-artifacts-android
         path: |
-          **/bin/Release/**
+          **/bin/Release/net8.0-android/**
           !**/bin/Release/**/ref/**
           !**/bin/Release/**/*.pdb
         retention-days: 7

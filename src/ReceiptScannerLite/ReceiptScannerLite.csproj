@@ -27,11 +27,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <!-- App Icon -->
-        <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+        <!-- App Icon - Commented out: files don't exist yet -->
+        <!-- <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" /> -->
 
-        <!-- Splash Screen -->
-        <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+        <!-- Splash Screen - Commented out: file doesn't exist yet -->
+        <!-- <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" /> -->
 
         <!-- Images -->
         <MauiImage Include="Resources\Images\*" />
@@ -63,10 +63,12 @@
 
     <!-- Windows specific -->
     <ItemGroup Condition="$(TargetFramework.StartsWith('net8.0-windows'))">
-        <!-- Use None Update instead of Content Include to avoid duplicates with SDK auto-inclusion -->
-        <None Update="Assets\tessdata\**">
+        <!-- Remove from default Content items to avoid NETSDK1022 duplicates -->
+        <Content Remove="Assets\tessdata\**" />
+        <!-- Re-add as Content with copy settings -->
+        <Content Include="Assets\tessdata\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
+        </Content>
     </ItemGroup>
 
 </Project>

@@ -48,7 +48,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: success()
       with:
         name: build-artifacts-android
@@ -85,7 +85,7 @@ jobs:
       run: dotnet build ${{ env.PROJECT_PATH }} -f net8.0-android -c Release /p:AndroidPackageFormat=apk /p:TreatWarningsAsErrors=false
 
     - name: Upload Android APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: success()
       with:
         name: android-apk
@@ -120,7 +120,7 @@ jobs:
       run: dotnet publish ${{ env.PROJECT_PATH }} -f net8.0-windows10.0.19041.0 -c Release -p:RuntimeIdentifierOverride=win10-x64 /p:TreatWarningsAsErrors=false
 
     - name: Upload Windows artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: success()
       with:
         name: windows-msix
